@@ -1,0 +1,8 @@
+name = "linkedin-post-webhook"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+# Create a KV namespace in Cloudflare, then set id here:
+# [[kv_namespaces]]
+# binding = "RATE_LIMIT_KV"
+# id = "<namespace-id>"

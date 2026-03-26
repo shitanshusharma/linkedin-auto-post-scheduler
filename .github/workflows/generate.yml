@@ -1,0 +1,50 @@
+name: Generate draft
+
+on:
+  schedule:
+    # Weekly: Monday 06:00 UTC — adjust as needed
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "generate or resend"
+        type: choice
+        options:
+          - generate
+          - resend
+        default: generate
+      post_id:
+        description: "Required for resend — pending post id"
+        type: string
+        required: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: generate-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      WF_ACTION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.action || 'generate' }}
+      WF_POST_ID: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.post_id || '' }}
+      TELEGRAM_POST_BOT_TOKEN: ${{ secrets.TELEGRAM_POST_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      TELEGRAM_LOG_BOT_TOKEN: ${{ secrets.TELEGRAM_LOG_BOT_TOKEN }}
+      TELEGRAM_LOG_CHAT_ID: ${{ secrets.TELEGRAM_LOG_CHAT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run generation script
+        run: python scripts/generate.py

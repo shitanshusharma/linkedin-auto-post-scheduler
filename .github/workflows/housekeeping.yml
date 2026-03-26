@@ -1,0 +1,31 @@
+name: Housekeeping
+
+on:
+  schedule:
+    - cron: "0 */12 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      TELEGRAM_POST_BOT_TOKEN: ${{ secrets.TELEGRAM_POST_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      TELEGRAM_LOG_BOT_TOKEN: ${{ secrets.TELEGRAM_LOG_BOT_TOKEN }}
+      TELEGRAM_LOG_CHAT_ID: ${{ secrets.TELEGRAM_LOG_CHAT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run housekeeping
+        run: python scripts/housekeeping.py

@@ -1,2 +1,12 @@
 .env
+.venv/
 .cursor
+
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+worker/node_modules/
+worker/.wrangler/
+worker/dist/
