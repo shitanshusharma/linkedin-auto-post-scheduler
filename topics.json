@@ -1,4 +1,12 @@
 [
-    { "id": "topic_001", "title": "Rate Limiting in Distributed Systems", "used": false },
-    { "id": "topic_002", "title": "Database Indexing Strategies", "used": false }
+  {
+    "id": "topic_001",
+    "title": "Rate Limiting in Distributed Systems",
+    "used": false
+  },
+  {
+    "id": "topic_002",
+    "title": "Database Indexing Strategies",
+    "used": false
+  }
 ]

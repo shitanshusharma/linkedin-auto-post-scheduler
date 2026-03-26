@@ -20,6 +20,7 @@ on:
 
 permissions:
   contents: write
+  models: read
 
 concurrency:
   group: generate-${{ github.repository }}
@@ -29,6 +30,7 @@ jobs:
   run:
     runs-on: ubuntu-latest
     env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       WF_ACTION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.action || 'generate' }}
       WF_POST_ID: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.post_id || '' }}
       TELEGRAM_POST_BOT_TOKEN: ${{ secrets.TELEGRAM_POST_BOT_TOKEN }}
