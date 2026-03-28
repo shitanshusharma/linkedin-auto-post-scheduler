@@ -1,6 +1,5 @@
 export const POSTS_PATH = "posts.json";
 export const MAX_TELEGRAM_POST_LENGTH = 2000;
-export const MAX_DRAFT_PREVIEW_LENGTH = 500;
 export const RATE_LIMIT_MAX_REQUESTS_PER_MINUTE = 20;
 export const CALLBACK_DATA_MAX_BYTES = 64;
 export const LINKEDIN_VERSION = "202603";
@@ -39,6 +38,7 @@ export const RESPONSE_MESSAGES = {
 
 export const ERROR_CODES = {
   EMPTY_POST_AFTER_SANITIZATION: "empty_post_after_sanitization",
+  POST_EXCEEDS_MAX_LENGTH: "post_exceeds_max_length",
   TIMEOUT: "timeout",
   NETWORK_ERROR: "network_error",
   LINKEDIN_REAUTH_REQUIRED: "linkedin_401_reauth_required",

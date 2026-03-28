@@ -27,7 +27,7 @@ if str(_SCRIPT_DIR) not in sys.path:
 
 from lib.constants import ACTIVE_POST_STATUSES, ERROR_MESSAGES
 from lib.git_push import commit_and_push, should_auto_push
-from lib.llm import generate_post_json
+from lib.llm import ensure_linkedin_skill_ready, generate_post_json
 from lib.llm_output import LlmPostOutput, to_llm_post_output, validate_llm_output
 from lib.logger import get_logger
 from lib.paths import repo_root
@@ -39,12 +39,11 @@ LOGGER = get_logger("generate")
 
 
 def _draft_message(topic: str, composed: str, risk_flags: list[str]) -> str:
-    preview = composed[:500] + ("..." if len(composed) > 500 else "")
     flags = ", ".join(risk_flags) if risk_flags else "None"
     return (
         f"📝 New LinkedIn Draft\n\n"
         f"Topic: {topic}\n\n"
-        f"---\n{preview}\n---\n\n"
+        f"---\n{composed}\n---\n\n"
         f"Risk Flags: {flags}"
     )
 
@@ -223,6 +222,13 @@ def main() -> int:
     if not topic_title:
         LOGGER.audit("llm_output_invalid: empty topic title")
         return 0
+
+    try:
+        ensure_linkedin_skill_ready()
+    except RuntimeError as exc:
+        LOGGER.audit(f"skill_gate_failed: {exc}")
+        LOGGER.error(f"Mandatory linkedin-posts skill check failed: {exc}")
+        return 1
 
     if not os.environ.get("GITHUB_TOKEN", "").strip():
         LOGGER.error(ERROR_MESSAGES.GITHUB_TOKEN_REQUIRED)

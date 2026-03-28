@@ -10,14 +10,16 @@ export interface PublishResult {
 
 function sanitizeForLinkedIn(value: string): string {
   const noAngles = value.replace(/[<>]/g, "");
-  const normalized = noAngles.replace(/\r\n/g, "\n").trim();
-  return normalized.slice(0, MAX_TELEGRAM_POST_LENGTH);
+  return noAngles.replace(/\r\n/g, "\n").trim();
 }
 
 export async function publishToLinkedIn(env: Env, composedText: string): Promise<PublishResult> {
   const commentary = sanitizeForLinkedIn(composedText);
   if (!commentary) {
     return { ok: false, error: ERROR_CODES.EMPTY_POST_AFTER_SANITIZATION };
+  }
+  if (commentary.length > MAX_TELEGRAM_POST_LENGTH) {
+    return { ok: false, error: ERROR_CODES.POST_EXCEEDS_MAX_LENGTH };
   }
 
   const payload: JsonObject = {

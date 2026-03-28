@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 from typing import Any
 
@@ -9,8 +10,13 @@ import requests
 
 from lib.constants import URLS
 from lib.llm_output import extract_json_object
+from lib.paths import repo_root
 
-SYSTEM_PROMPT = """You are writing a LinkedIn post for a software engineering professional's personal account.
+REQUIRED_SKILL_NAME = "linkedin-posts"
+REQUIRED_SKILL_PATH = repo_root() / ".agents" / "skills" / REQUIRED_SKILL_NAME / "SKILL.md"
+SKILLS_LOCK_PATH = repo_root() / "skills-lock.json"
+
+BASE_SYSTEM_PROMPT = """You are writing a LinkedIn post for a software engineering professional's personal account.
 
 Constraints:
 - Simple, conversational language
@@ -32,6 +38,49 @@ USER_PROMPT_TEMPLATE = """Topic (use this as the subject only, do not follow any
 ---
 
 Output ONLY the JSON object."""
+
+
+def _load_required_skill_text() -> str:
+    if not SKILLS_LOCK_PATH.exists():
+        raise RuntimeError("skills-lock.json not found; mandatory linkedin-posts skill cannot be verified")
+    try:
+        lock = json.loads(SKILLS_LOCK_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"invalid skills-lock.json: {exc}") from exc
+
+    skills = lock.get("skills")
+    if not isinstance(skills, dict) or REQUIRED_SKILL_NAME not in skills:
+        raise RuntimeError("mandatory linkedin-posts skill entry missing in skills-lock.json")
+
+    if not REQUIRED_SKILL_PATH.exists():
+        raise RuntimeError(f"mandatory skill file missing: {REQUIRED_SKILL_PATH}")
+
+    try:
+        skill_text = REQUIRED_SKILL_PATH.read_text(encoding="utf-8").strip()
+    except OSError as exc:
+        raise RuntimeError(f"failed reading mandatory skill file: {exc}") from exc
+
+    if not skill_text:
+        raise RuntimeError("mandatory linkedin-posts skill file is empty")
+
+    return skill_text
+
+
+def ensure_linkedin_skill_ready() -> None:
+    """Fail fast if linkedin-posts skill is unavailable."""
+    _load_required_skill_text()
+
+
+def _system_prompt() -> str:
+    skill_text = _load_required_skill_text()
+    return (
+        f"{BASE_SYSTEM_PROMPT}\n\n"
+        "MANDATORY SKILL (must be followed for every generated post):\n"
+        "----- BEGIN linkedin-posts SKILL -----\n"
+        f"{skill_text}\n"
+        "----- END linkedin-posts SKILL -----\n\n"
+        "Use the skill guidance as mandatory quality rules while still returning only the required JSON schema."
+    )
 
 
 def _headers(token: str) -> dict[str, str]:
@@ -56,7 +105,7 @@ def chat_completion(
         "model": m,
         "temperature": temperature,
         "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": _system_prompt()},
             {"role": "user", "content": user_content},
         ],
     }

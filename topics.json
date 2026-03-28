@@ -1,22 +1,152 @@
 [
   {
     "id": "topic_001",
-    "title": "Rate Limiting in Distributed Systems",
-    "used": true
+    "title": "How Netflix Generates Personalized Thumbnails Using Contextual Bandits",
+    "used": false
   },
   {
     "id": "topic_002",
-    "title": "Database Indexing Strategies",
-    "used": true
+    "title": "How Uber's Surge Pricing Algorithm Balances Supply and Demand in Real Time",
+    "used": false
   },
   {
     "id": "topic_003",
-    "title": "Caching Strategies in Distributed Systems",
-    "used": true
+    "title": "How Spotify's Discover Weekly Uses Collaborative Filtering and NLP",
+    "used": false
   },
   {
     "id": "topic_004",
-    "title": "Observability: Logs, Metrics, Traces",
+    "title": "How Google Maps Computes Real-Time Traffic from Anonymized GPS Probe Data",
+    "used": false
+  },
+  {
+    "id": "topic_005",
+    "title": "How Discord Handles Millions of Concurrent WebSocket Connections",
+    "used": false
+  },
+  {
+    "id": "topic_006",
+    "title": "How GitHub's Code Search Indexes Billions of Lines Using Trigram Indexing",
+    "used": false
+  },
+  {
+    "id": "topic_007",
+    "title": "How Stripe's Idempotency Keys Prevent Duplicate Payment Processing",
+    "used": false
+  },
+  {
+    "id": "topic_008",
+    "title": "How Apple's Find My Network Locates Offline Devices Without Leaking Their Position",
+    "used": false
+  },
+  {
+    "id": "topic_009",
+    "title": "How CockroachDB Achieves Globally Consistent Transactions with Hybrid Logical Clocks",
+    "used": false
+  },
+  {
+    "id": "topic_010",
+    "title": "How Figma's Multiplayer Sync Uses CRDTs to Resolve Concurrent Edits",
+    "used": false
+  },
+  {
+    "id": "topic_011",
+    "title": "How DoorDash's Dispatch Algorithm Assigns Orders to Dashers in Real Time",
+    "used": false
+  },
+  {
+    "id": "topic_012",
+    "title": "How AWS S3 Achieves Eleven 9s of Durability with Erasure Coding",
+    "used": false
+  },
+  {
+    "id": "topic_013",
+    "title": "How TikTok's For You Page Ranks Content Using a Two-Stage Retrieval Pipeline",
+    "used": false
+  },
+  {
+    "id": "topic_014",
+    "title": "How YouTube Handles 500 Hours of Video Upload Per Minute with Adaptive Encoding",
+    "used": false
+  },
+  {
+    "id": "topic_015",
+    "title": "How LinkedIn's People You May Know Uses Graph Neural Networks",
+    "used": false
+  },
+  {
+    "id": "topic_016",
+    "title": "How Cloudflare's Anycast Routing Absorbs DDoS Traffic at the Edge",
+    "used": false
+  },
+  {
+    "id": "topic_017",
+    "title": "How Dropbox Deduplicates Files Using Content-Defined Chunking",
+    "used": false
+  },
+  {
+    "id": "topic_018",
+    "title": "How Airbnb's Search Ranking Balances Price, Reviews, and Inventory Diversity",
+    "used": false
+  },
+  {
+    "id": "topic_019",
+    "title": "How Facebook's TAO Graph Database Handles Social Graph Reads at Petabyte Scale",
+    "used": false
+  },
+  {
+    "id": "topic_020",
+    "title": "How Chrome's V8 JIT Compiler Identifies and Optimizes Hot JavaScript Paths",
+    "used": false
+  },
+  {
+    "id": "topic_021",
+    "title": "How Kafka's Log Compaction Enables Durable, Replayable Event Streams",
+    "used": false
+  },
+  {
+    "id": "topic_022",
+    "title": "How OpenAI's RLHF Pipeline Shapes Model Behavior from Human Feedback",
+    "used": false
+  },
+  {
+    "id": "topic_023",
+    "title": "How Pinterest's Two-Tower Neural Network Retrieves Relevant Pins at Scale",
+    "used": false
+  },
+  {
+    "id": "topic_024",
+    "title": "How Slack's Message Fanout Delivers to Millions of WebSocket Clients Reliably",
+    "used": false
+  },
+  {
+    "id": "topic_025",
+    "title": "How Notion's Block-Based Data Model Enables Real-Time Collaborative Editing",
+    "used": false
+  },
+  {
+    "id": "topic_026",
+    "title": "How Twitch Achieves Sub-3-Second Latency in Its Live Streaming Pipeline",
+    "used": false
+  },
+  {
+    "id": "topic_027",
+    "title": "How Amazon's Warehouse Robots Coordinate Paths Using SLAM and Conflict Resolution",
+    "used": false
+  },
+  {
+    "id": "topic_028",
+    "title": "How Meta Handles Cross-Datacenter Replication in Cassandra with Tunable Consistency",
+    "used": false
+  },
+  {
+    "id": "topic_029",
+    "title": "How Robinhood's Options Pricing Engine Runs Black-Scholes in Sub-Millisecond Time",
+    "used": false
+  },
+  {
+    "id": "topic_030",
+    "title": "How Tesla's Autopilot Fuses Camera, Radar, and Ultrasonic Sensor Data in Real Time",
     "used": false
   }
 ]

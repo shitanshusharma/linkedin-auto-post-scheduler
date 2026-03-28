@@ -11,7 +11,6 @@
 
 import {
   ERROR_CODES,
-  MAX_DRAFT_PREVIEW_LENGTH,
   MAX_TELEGRAM_POST_LENGTH,
   RATE_LIMIT_MAX_REQUESTS_PER_MINUTE,
   RESPONSE_MESSAGES,
@@ -64,11 +63,9 @@ function telegramMessageIdOf(post: JsonObject): number | null {
 }
 
 function draftMessage(post: JsonObject): string {
-  const composed = composedTextOf(post);
-  const preview = composed.length > MAX_DRAFT_PREVIEW_LENGTH ? `${composed.slice(0, MAX_DRAFT_PREVIEW_LENGTH)}...` : composed;
   const flags = riskFlagsOf(post);
   const flagsText = flags.length > 0 ? flags.join(", ") : "None";
-  return `📝 New LinkedIn Draft\n\nTopic: ${topicOf(post)}\n\n---\n${preview}\n---\n\nRisk Flags: ${flagsText}`;
+  return `📝 New LinkedIn Draft\n\nTopic: ${topicOf(post)}\n\n---\n${composedTextOf(post)}\n---\n\nRisk Flags: ${flagsText}`;
 }
 
 async function checkRateLimit(env: Env, userId: string): Promise<"ok" | "hit" | "error"> {
