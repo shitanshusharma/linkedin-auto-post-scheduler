@@ -8,5 +8,15 @@
     "id": "topic_002",
     "title": "Database Indexing Strategies",
     "used": true
+  },
+  {
+    "id": "topic_003",
+    "title": "Caching Strategies in Distributed Systems",
+    "used": false
+  },
+  {
+    "id": "topic_004",
+    "title": "Observability: Logs, Metrics, Traces",
+    "used": false
   }
 ]
