@@ -61,5 +61,26 @@
     "posted_at": "2026-03-28T20:03:29.108Z",
     "linkedin_post_id": null,
     "error": null
+  },
+  {
+    "id": "post_2026_03_28_004",
+    "topic": "How Netflix Generates Personalized Thumbnails Using Contextual Bandits",
+    "status": "pending",
+    "approval_token": "2a635f9f8acefee3",
+    "telegram_message_id": 11,
+    "content": {
+      "hook": "Ever wondered how Netflix keeps you hooked with those perfect thumbnails?",
+      "body": "Netflix uses a technique called contextual bandits to personalize thumbnails for each viewer. This means that instead of showing the same image to everyone, Netflix analyzes your viewing habits and preferences to select a thumbnail that’s most likely to grab your attention.\n\nFor example, if you frequently watch action movies, you might see a thrilling scene from the film as your thumbnail. On the other hand, if you lean towards romantic comedies, you might get a sweet moment between the main characters. This tailored approach not only enhances user experience but also boosts engagement significantly.\n\nHere's a simple illustration of the process:\n\n1. **User Profile**: Viewing habits and preferences are collected.\n2. **Thumbnail Selection**: Based on the profile, various thumbnails are tested.\n3. **Feedback Loop**: Data from user interactions informs future selections.\n\nThis method allows Netflix to continuously improve and adapt their offerings, keeping viewers coming back for more!",
+      "cta": "What do you think about personalized content? Have you noticed how it affects your viewing choices?"
+    },
+    "composed_text": "Ever wondered how Netflix keeps you hooked with those perfect thumbnails?\n\nNetflix uses a technique called contextual bandits to personalize thumbnails for each viewer. This means that instead of showing the same image to everyone, Netflix analyzes your viewing habits and preferences to select a thumbnail that’s most likely to grab your attention.\n\nFor example, if you frequently watch action movies, you might see a thrilling scene from the film as your thumbnail. On the other hand, if you lean towards romantic comedies, you might get a sweet moment between the main characters. This tailored approach not only enhances user experience but also boosts engagement significantly.\n\nHere's a simple illustration of the process:\n\n1. **User Profile**: Viewing habits and preferences are collected.\n2. **Thumbnail Selection**: Based on the profile, various thumbnails are tested.\n3. **Feedback Loop**: Data from user interactions informs future selections.\n\nThis method allows Netflix to continuously improve and adapt their offerings, keeping viewers coming back for more!\n\nWhat do you think about personalized content? Have you noticed how it affects your viewing choices?",
+    "risk_flags": [],
+    "proposed_edit": null,
+    "publish_attempted_at": null,
+    "created_at": "2026-03-28T22:13:33Z",
+    "approved_at": null,
+    "posted_at": null,
+    "linkedin_post_id": null,
+    "error": null
   }
 ]
