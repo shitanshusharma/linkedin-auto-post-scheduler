@@ -85,6 +85,7 @@ const MAX_TELEGRAM_POST_LENGTH = 2000;
 const MAX_DRAFT_PREVIEW_LENGTH = 500;
 const RATE_LIMIT_MAX_REQUESTS_PER_MINUTE = 20;
 const CALLBACK_DATA_MAX_BYTES = 64;
+const LINKEDIN_VERSION = "202603";
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -462,7 +463,7 @@ async function publishToLinkedIn(env: Env, composedText: string): Promise<Publis
       headers: {
         Authorization: `Bearer ${env.LINKEDIN_ACCESS_TOKEN}`,
         "Content-Type": "application/json",
-        "LinkedIn-Version": "202401",
+        "LinkedIn-Version": LINKEDIN_VERSION,
         "X-Restli-Protocol-Version": "2.0.0",
       },
       body: JSON.stringify(payload),
