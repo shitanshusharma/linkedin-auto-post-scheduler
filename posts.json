@@ -23,7 +23,7 @@
   {
     "id": "post_2026_03_28_002",
     "topic": "Database Indexing Strategies",
-    "status": "pending",
+    "status": "approved",
     "approval_token": "2385ff727a4ae202",
     "telegram_message_id": 7,
     "content": {
@@ -34,9 +34,9 @@
     "composed_text": "Ever wondered how to make your database queries faster?\n\nThink of indexing like a library catalog. When you want to find a specific book, you don’t want to search through every single one on the shelf. Instead, you check the catalog, which points you straight to the right section. \n\nFor example, when working on an e-commerce site, we had a feature to display products by category. Initially, searching for products took several seconds because the database scanned every row. By adding an index on the category field, we reduced search time from 5 seconds to under 100 milliseconds, making the user experience much smoother.\n\nAnother case is a social media app where users search for friends by name. We found that without indexing, even a simple search took ages. After implementing an index on the user names, we made those searches instantaneous. \n\nIn both cases, indexing helped us retrieve data much faster, improving overall performance and user satisfaction.  \n\nRemember, a well-planned indexing strategy can be the difference between a sluggish application and a speedy one!\n\nHave you implemented any indexing strategies in your projects? Share your experiences!",
     "risk_flags": [],
     "proposed_edit": null,
-    "publish_attempted_at": null,
+    "publish_attempted_at": "2026-03-28T19:31:35.834Z",
     "created_at": "2026-03-28T19:31:18Z",
-    "approved_at": null,
+    "approved_at": "2026-03-28T19:31:35.834Z",
     "posted_at": null,
     "linkedin_post_id": null,
     "error": null
