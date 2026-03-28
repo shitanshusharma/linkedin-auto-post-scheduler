@@ -7,9 +7,8 @@ from typing import Any
 
 import requests
 
+from lib.constants import URLS
 from lib.llm_output import extract_json_object
-
-MODELS_URL = "https://models.github.ai/inference/chat/completions"
 
 SYSTEM_PROMPT = """You are writing a LinkedIn post for a software engineering professional's personal account.
 
@@ -61,7 +60,7 @@ def chat_completion(
             {"role": "user", "content": user_content},
         ],
     }
-    r = requests.post(MODELS_URL, headers=_headers(token), json=body, timeout=120)
+    r = requests.post(URLS.GITHUB_MODELS_CHAT_COMPLETIONS, headers=_headers(token), json=body, timeout=120)
     r.raise_for_status()
     data = r.json()
     choices = data.get("choices") or []

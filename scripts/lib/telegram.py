@@ -3,8 +3,7 @@ from typing import Any, Optional
 
 import requests
 
-# Telegram Bot API: callback_data max length (bytes)
-MAX_CALLBACK_DATA_BYTES = 64
+from .constants import MAX_CALLBACK_DATA_BYTES, URLS
 
 
 def send_message(
@@ -16,7 +15,7 @@ def send_message(
     reply_markup: Optional[dict[str, Any]] = None,
 ) -> dict:
     """Telegram Bot API sendMessage. Raises on HTTP error."""
-    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    url = f"{URLS.TELEGRAM_BOT_API_BASE}{bot_token}/sendMessage"
     payload: dict = {"chat_id": chat_id, "text": text}
     if parse_mode:
         payload["parse_mode"] = parse_mode

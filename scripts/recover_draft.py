@@ -14,6 +14,11 @@ import json
 import sys
 from pathlib import Path
 
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
+
 _SCRIPT_DIR = Path(__file__).resolve().parent
 if str(_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR))
@@ -40,12 +45,8 @@ def _normalize_post(p: dict) -> dict:
 
 
 def main() -> int:
-    try:
-        from dotenv import load_dotenv
-
+    if load_dotenv is not None:
         load_dotenv(repo_root() / ".env")
-    except ImportError:
-        pass
 
     parser = argparse.ArgumentParser(description="Recover / upsert a pending draft in posts.json")
     parser.add_argument("--from-json", type=Path, default=None, help="Path to JSON with all fields")
