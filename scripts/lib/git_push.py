@@ -12,16 +12,17 @@ def commit_and_push(repo_root: Path, paths: list[str], message: str) -> bool:
     Stage paths, commit if dirty, push to origin.
     Returns True if a commit was created and push attempted.
     """
-    subprocess.run(
-        ["git", "config", "user.name", "github-actions"],
-        cwd=repo_root,
-        check=True,
-    )
-    subprocess.run(
-        ["git", "config", "user.email", "github-actions@users.noreply.github.com"],
-        cwd=repo_root,
-        check=True,
-    )
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        subprocess.run(
+            ["git", "config", "user.name", "github-actions"],
+            cwd=repo_root,
+            check=True,
+        )
+        subprocess.run(
+            ["git", "config", "user.email", "github-actions@users.noreply.github.com"],
+            cwd=repo_root,
+            check=True,
+        )
     for p in paths:
         subprocess.run(["git", "add", p], cwd=repo_root, check=True)
 

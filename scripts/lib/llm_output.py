@@ -4,9 +4,28 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any
+from typing import Any, TypedDict
 
 REQUIRED_KEYS = frozenset({"hook", "body", "cta", "risk_flags"})
+
+
+class LlmPostOutput(TypedDict):
+    """Structured LLM output after validation (§3.3.1)."""
+
+    hook: str
+    body: str
+    cta: str
+    risk_flags: list[str]
+
+
+def to_llm_post_output(data: dict[str, Any]) -> LlmPostOutput:
+    """Narrow a validated dict to LlmPostOutput. Call only after validate_llm_output passes."""
+    return {
+        "hook": str(data["hook"]),
+        "body": str(data["body"]),
+        "cta": str(data["cta"]),
+        "risk_flags": [str(x) for x in data["risk_flags"]],
+    }
 
 
 def extract_json_object(raw: str) -> dict[str, Any]:

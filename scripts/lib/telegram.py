@@ -3,6 +3,9 @@ from typing import Any, Optional
 
 import requests
 
+# Telegram Bot API: callback_data max length (bytes)
+MAX_CALLBACK_DATA_BYTES = 64
+
 
 def send_message(
     bot_token: str,
@@ -27,7 +30,14 @@ def send_message(
 def inline_approve_edit_reject(post_id: str, approval_token: str) -> dict[str, Any]:
     """Inline keyboard: a:/e:/r: + post_id + token (callback_data ≤ 64 bytes)."""
     def cb(prefix: str) -> str:
-        return f"{prefix}:{post_id}:{approval_token}"
+        s = f"{prefix}:{post_id}:{approval_token}"
+        n = len(s.encode("utf-8"))
+        if n > MAX_CALLBACK_DATA_BYTES:
+            raise ValueError(
+                f"callback_data exceeds {MAX_CALLBACK_DATA_BYTES} bytes ({n}): "
+                "shorten post_id or approval_token"
+            )
+        return s
 
     return {
         "inline_keyboard": [

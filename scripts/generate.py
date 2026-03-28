@@ -22,7 +22,7 @@ if str(_SCRIPT_DIR) not in sys.path:
 
 from lib.git_push import commit_and_push, should_auto_push
 from lib.llm import generate_post_json
-from lib.llm_output import validate_llm_output
+from lib.llm_output import LlmPostOutput, to_llm_post_output, validate_llm_output
 from lib.paths import repo_root
 from lib.post_record import build_post, compose_text, new_approval_token, next_post_id
 from lib.repo_json import read_json, write_json
@@ -42,26 +42,24 @@ def _draft_message(topic: str, composed: str, risk_flags: list[str]) -> str:
     )
 
 
-def _run_llm(topic_title: str) -> dict | None:
+def _run_llm(topic_title: str) -> LlmPostOutput | None:
     token = os.environ.get("GITHUB_TOKEN", "").strip()
     if not token:
         return None
 
-    last_err = ""
-    for strict in (False, True):
+    notes: list[str] = []
+    for attempt, strict in enumerate((False, True), start=1):
         try:
             data = generate_post_json(token=token, topic_title=topic_title, strict_retry=strict)
             ok, err = validate_llm_output(data)
             if ok:
-                return data
-            last_err = err
+                return to_llm_post_output(data)
+            notes.append(f"attempt{attempt} validation: {err}")
         except Exception as exc:  # noqa: BLE001
-            last_err = f"{type(exc).__name__}: {exc}"
-            if not strict:
-                continue
-            break
-    log_bot_send(f"[generate] llm_output_invalid: {last_err}")
-    print(f"LLM validation failed: {last_err}", file=sys.stderr)
+            notes.append(f"attempt{attempt} parse: {type(exc).__name__}: {exc}")
+    detail = " | ".join(notes)
+    log_bot_send(f"[generate] llm_output_invalid: {detail}")
+    print(f"LLM validation failed: {detail}", file=sys.stderr)
     return None
 
 
@@ -126,10 +124,10 @@ def main() -> int:
     if llm is None:
         return 0
 
-    hook = str(llm["hook"])
-    body = str(llm["body"])
-    cta = str(llm["cta"])
-    risk_flags = [str(x) for x in llm["risk_flags"]]
+    hook = llm["hook"]
+    body = llm["body"]
+    cta = llm["cta"]
+    risk_flags = llm["risk_flags"]
 
     post_id = next_post_id(post_dicts)
     approval_token = new_approval_token()
@@ -143,11 +141,17 @@ def main() -> int:
 
     text = _draft_message(topic_title, composed, risk_flags)
     try:
+        markup = inline_approve_edit_reject(post_id, approval_token)
+    except ValueError as exc:
+        log_bot_send(f"[generate] callback_data_invalid: {exc}")
+        print(str(exc), file=sys.stderr)
+        return 1
+    try:
         tg = send_message(
             post_token,
             chat_id,
             text,
-            reply_markup=inline_approve_edit_reject(post_id, approval_token),
+            reply_markup=markup,
         )
     except Exception as exc:  # noqa: BLE001
         log_bot_send(f"[generate] telegram_send_failed: {exc}")
