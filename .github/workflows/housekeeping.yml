@@ -66,4 +66,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Skip summary
-        run: echo "Housekeeping skipped due to missing secrets: ${{ needs.preflight.outputs.missing }}"
+        run: |
+          echo "Housekeeping skipped due to missing secrets: ${{ needs.preflight.outputs.missing }}"

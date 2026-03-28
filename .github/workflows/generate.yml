@@ -87,4 +87,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Skip summary
-        run: echo "Generation skipped due to missing secrets: ${{ needs.preflight.outputs.missing }}"
+        run: |
+          echo "Generation skipped due to missing secrets: ${{ needs.preflight.outputs.missing }}"
