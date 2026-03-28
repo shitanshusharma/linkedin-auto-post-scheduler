@@ -1,4 +1,4 @@
-name = "linkedin-post-webhook"
+name = "linkedin-auto-post-scheduler"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 
