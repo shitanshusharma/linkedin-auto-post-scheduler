@@ -2,7 +2,7 @@
   {
     "id": "post_2026_03_28_001",
     "topic": "Rate Limiting in Distributed Systems",
-    "status": "approved",
+    "status": "failed",
     "approval_token": "b602c0731d65e6ab",
     "telegram_message_id": 5,
     "content": {
@@ -18,6 +18,6 @@
     "approved_at": "2026-03-28T18:31:56.518Z",
     "posted_at": null,
     "linkedin_post_id": null,
-    "error": null
+    "error": "linkedin_status_426: {\"status\":426,\"code\":\"NONEXISTENT_VERSION\",\"message\":\"Requested version 20240101 is not active\"}"
   }
 ]
