@@ -10,3 +10,5 @@ venv/
 worker/node_modules/
 worker/.wrangler/
 worker/dist/
+
+low-level-design.md

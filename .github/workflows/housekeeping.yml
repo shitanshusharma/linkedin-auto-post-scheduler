@@ -9,9 +9,39 @@ permissions:
   contents: write
 
 jobs:
-  run:
+  preflight:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+      missing: ${{ steps.check.outputs.missing }}
+    steps:
+      - name: Check required secrets
+        id: check
+        shell: bash
+        env:
+          # Secret-dependent values are empty in forks unless users configure them.
+          TELEGRAM_POST_BOT_TOKEN: ${{ secrets.TELEGRAM_POST_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          missing=()
+          [[ -z "${TELEGRAM_POST_BOT_TOKEN}" ]] && missing+=("TELEGRAM_POST_BOT_TOKEN")
+          [[ -z "${TELEGRAM_CHAT_ID}" ]] && missing+=("TELEGRAM_CHAT_ID")
+
+          if (( ${#missing[@]} > 0 )); then
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            echo "missing=${missing[*]}" >> "$GITHUB_OUTPUT"
+            echo "::warning::Skipping housekeeping. Missing secrets: ${missing[*]}"
+          else
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            echo "missing=" >> "$GITHUB_OUTPUT"
+          fi
+
+  run_housekeeping:
+    needs: preflight
+    if: needs.preflight.outputs.should_run == 'true'
     runs-on: ubuntu-latest
     env:
+      # Secret-dependent values are empty in forks unless users configure them.
       TELEGRAM_POST_BOT_TOKEN: ${{ secrets.TELEGRAM_POST_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       TELEGRAM_LOG_BOT_TOKEN: ${{ secrets.TELEGRAM_LOG_BOT_TOKEN }}
@@ -29,3 +59,11 @@ jobs:
 
       - name: Run housekeeping
         run: python scripts/housekeeping.py
+
+  housekeeping_skipped:
+    needs: preflight
+    if: needs.preflight.outputs.should_run != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip summary
+        run: echo "Housekeeping skipped due to missing secrets: ${{ needs.preflight.outputs.missing }}"

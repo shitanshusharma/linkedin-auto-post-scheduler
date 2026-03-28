@@ -1,0 +1,69 @@
+name: Bug report
+description: Report a reproducible bug in scheduler, worker, or workflow behavior.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please provide enough detail to reproduce it.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened and what did you expect?
+      placeholder: Concise description of the problem.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include exact commands, workflow run links, or webhook payload shape.
+      placeholder: |
+        1. Run ...
+        2. Trigger ...
+        3. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs and errors
+      description: Paste relevant logs. Redact tokens, secrets, and personal data.
+      render: shell
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - scripts/generate.py
+        - scripts/housekeeping.py
+        - worker webhook
+        - GitHub Actions
+        - docs
+        - other
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Python version, Node version, and where this ran (local/Actions/Worker).
+      placeholder: "Windows 11, Python 3.12, Node 22, GitHub Actions"
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues before opening this bug report.
+          required: true
+        - label: I removed/redacted sensitive information from logs and screenshots.
+          required: true

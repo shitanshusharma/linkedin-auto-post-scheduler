@@ -1,0 +1,8 @@
+title = "linkedin-auto-post-scheduler gitleaks config"
+
+[allowlist]
+description = "Operational state files tracked intentionally in this repository"
+paths = [
+  '''posts\.json''',
+  '''topics\.json'''
+]
