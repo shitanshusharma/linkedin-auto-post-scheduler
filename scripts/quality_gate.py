@@ -30,6 +30,7 @@ def main() -> int:
     root = Path(__file__).resolve().parents[1]
     worker = root / "worker"
     npm_bin = "npm.cmd" if os.name == "nt" else "npm"
+    skip_ruff = os.environ.get("QUALITY_SKIP_RUFF") == "1"
 
     checks = [
         Check(
@@ -43,6 +44,15 @@ def main() -> int:
             cwd=worker,
         ),
     ]
+    if not skip_ruff:
+        checks.insert(
+            1,
+            Check(
+                name="Python lint check (ruff)",
+                command=[sys.executable, "-m", "ruff", "check", "scripts"],
+                cwd=root,
+            ),
+        )
 
     failed = False
     for check in checks:

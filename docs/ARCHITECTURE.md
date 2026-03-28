@@ -170,3 +170,81 @@ Use least privilege (fine-grained PAT, minimal permissions, scoped secrets).
 - Fast approvals, deliberate decisions.
 - Security in layers.
 - Simple storage and explicit state transitions.
+
+## 11) Manual Replay Validation Checklist
+
+Use this checklist in staging after deploying idempotency changes.
+
+Prerequisites:
+- Worker deployed with both KV bindings: `RATE_LIMIT_KV` and `IDEMPOTENCY_KV`.
+- Telegram webhook configured with the same `TELEGRAM_WEBHOOK_SECRET` used by the Worker.
+- At least one `pending` post exists in `posts.json`.
+
+Set local variables:
+
+```bash
+export WORKER_URL="https://<your-worker>.workers.dev/webhook"
+export TG_SECRET="<telegram_webhook_secret>"
+```
+
+### Test A: Bad secret is rejected
+
+```bash
+curl -i -X POST "$WORKER_URL" \
+  -H "Content-Type: application/json" \
+  -H "X-Telegram-Bot-Api-Secret-Token: wrong-secret" \
+  -d '{"update_id":100001,"message":{"message_id":1,"chat":{"id":123},"from":{"id":123},"text":"hello"}}'
+```
+
+Expected:
+- HTTP `401`.
+- No post state change.
+- No idempotency side-effect that blocks a later valid update.
+
+### Test B: First valid callback is processed once
+
+Use a real `post_id` + `approval_token` from a pending post.
+
+```bash
+curl -i -X POST "$WORKER_URL" \
+  -H "Content-Type: application/json" \
+  -H "X-Telegram-Bot-Api-Secret-Token: $TG_SECRET" \
+  -d '{"update_id":100002,"callback_query":{"id":"cb-100002","from":{"id":<TELEGRAM_USER_ID>},"data":"a:<post_id>:<approval_token>","message":{"message_id":<telegram_message_id>,"chat":{"id":<TELEGRAM_CHAT_ID>}}}}'
+```
+
+Expected:
+- HTTP `200`.
+- Post transitions through approve/publish flow exactly once.
+
+### Test C: Replay same callback is ignored
+
+Repeat the exact same request from Test B (same `update_id` and callback payload).
+
+Expected:
+- HTTP `200`.
+- No second publish attempt.
+- No duplicate state transition in `posts.json`.
+
+### Test D: Replay same edit message is ignored
+
+If a post is in `editing`, send the same message update twice:
+
+```bash
+curl -i -X POST "$WORKER_URL" \
+  -H "Content-Type: application/json" \
+  -H "X-Telegram-Bot-Api-Secret-Token: $TG_SECRET" \
+  -d '{"update_id":100003,"message":{"message_id":77,"chat":{"id":<TELEGRAM_CHAT_ID>},"from":{"id":<TELEGRAM_USER_ID>},"text":"Rewritten draft text"}}'
+```
+
+Send the same payload again.
+
+Expected:
+- First request applies transition (`editing` -> `confirming_edit`).
+- Second request returns `200` but does not apply changes again.
+
+### Test E: Approve race safety (quick smoke)
+
+Send two approve callbacks for the same post in quick succession with different update IDs:
+- One request should win transition to `approved`.
+- The other should be blocked as action-not-allowed or no-op.
+- Only one publish flow should proceed.

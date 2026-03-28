@@ -33,6 +33,11 @@ jobs:
         run: npm ci
         working-directory: worker
 
+      - name: Run Ruff lint
+        run: python -m ruff check scripts
+
       - name: Run quality gate
+        env:
+          QUALITY_SKIP_RUFF: "1"
         run: python scripts/quality_gate.py
 

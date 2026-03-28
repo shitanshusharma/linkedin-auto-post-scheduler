@@ -18,6 +18,7 @@ export interface Env {
   LINKEDIN_ACCESS_TOKEN: string;
   LINKEDIN_PERSON_ID: string;
   RATE_LIMIT_KV?: KVNamespaceLike;
+  IDEMPOTENCY_KV?: KVNamespaceLike;
 }
 
 export interface TelegramUser {
@@ -43,6 +44,7 @@ export interface TelegramCallbackQuery {
 }
 
 export interface TelegramUpdate {
+  update_id?: number;
   callback_query?: TelegramCallbackQuery;
   message?: TelegramMessage;
 }

@@ -6,29 +6,36 @@
  * - GitHub Contents API (posts.json as source of truth)
  * - LinkedIn publish API
  *
- * See low-level-design.md for expected behavior.
+ * See docs/ARCHITECTURE.md for expected behavior.
  */
 
 import {
   ERROR_CODES,
+  IDEMPOTENCY_TTL_SECONDS,
   MAX_TELEGRAM_POST_LENGTH,
   RATE_LIMIT_MAX_REQUESTS_PER_MINUTE,
   RESPONSE_MESSAGES,
 } from "./constants";
+import {
+  handleApprove,
+  handleConfirmEdit,
+  handleEdit,
+  handleReenterEdit,
+  handleReject,
+  handleRetry,
+  resendApprovalMessage,
+  setPostMessageId,
+} from "./decision_handlers";
 import { findPostIndex, mutatePostsWithRetry, readPosts } from "./github_posts";
-import { publishToLinkedIn } from "./linkedin_client";
 import { logEvent } from "./logger";
 import {
   answerCallbackQuery,
-  clearInlineKeyboard,
-  inlineApproveEditReject,
   inlineConfirmReenter,
-  inlineRetry,
   parseCallbackAction,
   sendPostBotMessage,
 } from "./telegram_client";
 import { Env, JsonObject, TelegramCallbackQuery, TelegramMessage, TelegramUpdate } from "./types";
-import { asNumber, asString, nowIso } from "./utils";
+import { asNumber, asString } from "./utils";
 
 function statusOf(post: JsonObject): string {
   return asString(post.status) ?? "";
@@ -38,34 +45,12 @@ function tokenOf(post: JsonObject): string {
   return asString(post.approval_token) ?? "";
 }
 
-function composedTextOf(post: JsonObject): string {
-  return asString(post.composed_text) ?? "";
-}
-
-function topicOf(post: JsonObject): string {
-  return asString(post.topic) ?? "Unknown";
-}
-
-function riskFlagsOf(post: JsonObject): string[] {
-  const raw = post.risk_flags;
-  if (!Array.isArray(raw)) {
-    return [];
-  }
-  return raw.filter((item): item is string => typeof item === "string");
-}
-
 function postIdOf(post: JsonObject): string {
   return asString(post.id) ?? "";
 }
 
 function telegramMessageIdOf(post: JsonObject): number | null {
   return asNumber(post.telegram_message_id);
-}
-
-function draftMessage(post: JsonObject): string {
-  const flags = riskFlagsOf(post);
-  const flagsText = flags.length > 0 ? flags.join(", ") : "None";
-  return `📝 New LinkedIn Draft\n\nTopic: ${topicOf(post)}\n\n---\n${composedTextOf(post)}\n---\n\nRisk Flags: ${flagsText}`;
 }
 
 async function checkRateLimit(env: Env, userId: string): Promise<"ok" | "hit" | "error"> {
@@ -105,79 +90,47 @@ function activeEditingPost(posts: JsonObject[]): JsonObject | null {
   return posts.find((post) => statusOf(post) === "editing") ?? null;
 }
 
-async function setPostMessageId(env: Env, postId: string, messageId: number | null): Promise<void> {
-  if (messageId === null) {
-    return;
+function idempotencyKeyFromUpdate(update: TelegramUpdate): string | null {
+  const updateId = asNumber(update.update_id);
+  if (updateId !== null) {
+    return `update:${updateId}`;
   }
-  await mutatePostsWithRetry(env, `chore(worker): track telegram msg for ${postId}`, (posts) => {
-    const idx = findPostIndex(posts, postId);
-    if (idx >= 0) {
-      posts[idx].telegram_message_id = messageId;
+
+  const callbackId = update.callback_query?.id;
+  if (callbackId) {
+    return `callback:${callbackId}`;
+  }
+
+  const messageId = asNumber(update.message?.message_id);
+  const chatId = asNumber(update.message?.chat?.id);
+  if (messageId !== null && chatId !== null) {
+    return `message:${chatId}:${messageId}`;
+  }
+  return null;
+}
+
+async function isDuplicateUpdate(env: Env, key: string): Promise<boolean> {
+  if (!env.IDEMPOTENCY_KV) {
+    return false;
+  }
+  try {
+    const existing = await env.IDEMPOTENCY_KV.get(key);
+    if (existing) {
+      return true;
     }
-  });
+    await env.IDEMPOTENCY_KV.put(key, "1", { expirationTtl: IDEMPOTENCY_TTL_SECONDS });
+    return false;
+  } catch {
+    await logEvent(env, "idempotency_kv_error");
+    return false;
+  }
 }
 
-async function resendApprovalMessage(env: Env, postId: string): Promise<void> {
-  const { posts } = await readPosts(env);
-  const idx = findPostIndex(posts, postId);
-  if (idx < 0) {
-    return;
-  }
-  const post = posts[idx];
-  const approvalToken = tokenOf(post);
-  const msgId = await sendPostBotMessage(env, draftMessage(post), inlineApproveEditReject(postId, approvalToken));
-  await setPostMessageId(env, postId, msgId);
-}
-
-async function runPublishFlow(env: Env, postId: string): Promise<void> {
-  const { posts } = await readPosts(env);
-  const idx = findPostIndex(posts, postId);
-  if (idx < 0) {
-    return;
-  }
-  const post = posts[idx];
-  const composed = composedTextOf(post);
-  const approvalToken = tokenOf(post);
-  const publish = await publishToLinkedIn(env, composed);
-
-  if (publish.ok) {
-    await mutatePostsWithRetry(env, `chore(worker): mark posted ${postId}`, (writePosts) => {
-      const writeIdx = findPostIndex(writePosts, postId);
-      if (writeIdx < 0) {
-        return;
-      }
-      writePosts[writeIdx].status = "posted";
-      writePosts[writeIdx].posted_at = nowIso();
-      writePosts[writeIdx].linkedin_post_id = publish.linkedinPostId ?? null;
-      writePosts[writeIdx].error = null;
-    });
-
-    await sendPostBotMessage(env, `✅ Post Published!\n\nTopic: ${topicOf(post)}\nPosted at: ${nowIso()}`);
-    await logEvent(env, `publish_success post_id=${postId}`);
-    return;
-  }
-
-  await mutatePostsWithRetry(env, `chore(worker): mark failed ${postId}`, (writePosts) => {
-    const writeIdx = findPostIndex(writePosts, postId);
-    if (writeIdx < 0) {
-      return;
-    }
-    writePosts[writeIdx].status = "failed";
-    writePosts[writeIdx].error = publish.error;
-  });
-  const text =
-    `⚠️ Publishing Failed\n\n` +
-    `Topic: ${topicOf(post)}\n` +
-    `Error: ${publish.error}\n\n` +
-    `⚠️ Post may have been published if this was a timeout.\n` +
-    `Check your LinkedIn profile before retrying.`;
-  const retryMarkup = inlineRetry(postId, approvalToken);
-  const msgId = await sendPostBotMessage(env, text, retryMarkup);
-  await setPostMessageId(env, postId, msgId);
-  await logEvent(env, `publish_failed post_id=${postId} error=${publish.error}`);
-}
-
-async function handleCallback(update: TelegramCallbackQuery, env: Env): Promise<Response> {
+async function handleCallback(
+  update: TelegramCallbackQuery,
+  env: Env,
+  idempotencyKey: string | null,
+): Promise<Response> {
   const callbackId = update.id;
   const callerUserId = update.from?.id;
   const callerChatId = update.message?.chat?.id;
@@ -186,6 +139,14 @@ async function handleCallback(update: TelegramCallbackQuery, env: Env): Promise<
     await answerCallbackQuery(env, callbackId, RESPONSE_MESSAGES.CALLBACK_UNAUTHORIZED);
     await logEvent(env, "webhook_security_violation reason=unauthorized_callback");
     return jsonOk();
+  }
+
+  if (idempotencyKey) {
+    const duplicate = await isDuplicateUpdate(env, idempotencyKey);
+    if (duplicate) {
+      await logEvent(env, `duplicate_update_ignored key=${idempotencyKey}`);
+      return jsonOk();
+    }
   }
 
   const rateLimit = await checkRateLimit(env, String(callerUserId));
@@ -226,154 +187,95 @@ async function handleCallback(update: TelegramCallbackQuery, env: Env): Promise<
   const currentMsgId = telegramMessageIdOf(post);
 
   if (parsed.action === "a") {
-    if (status !== "pending") {
-      await answerCallbackQuery(env, callbackId, RESPONSE_MESSAGES.CALLBACK_ACTION_NOT_ALLOWED);
-      await logEvent(env, `webhook_invalid_action action=a status=${status} post_id=${parsed.postId}`);
-      return jsonOk();
-    }
-    await clearInlineKeyboard(env, currentMsgId);
-    await answerCallbackQuery(env, callbackId, RESPONSE_MESSAGES.CALLBACK_PUBLISHING);
-    await mutatePostsWithRetry(env, `chore(worker): approve ${parsed.postId}`, (writePosts) => {
-      const writeIdx = findPostIndex(writePosts, parsed.postId);
-      if (writeIdx < 0) {
-        return;
-      }
-      writePosts[writeIdx].status = "approved";
-      writePosts[writeIdx].approved_at = nowIso();
-      writePosts[writeIdx].publish_attempted_at = nowIso();
-      writePosts[writeIdx].error = null;
+    await handleApprove({
+      env,
+      callbackId,
+      parsed,
+      status,
+      post,
+      currentMsgId,
     });
-    await logEvent(env, `approval_received post_id=${parsed.postId}`);
-    await runPublishFlow(env, parsed.postId);
     return jsonOk();
   }
 
   if (parsed.action === "e") {
-    if (status !== "pending") {
-      await answerCallbackQuery(env, callbackId, RESPONSE_MESSAGES.CALLBACK_ACTION_NOT_ALLOWED);
-      await logEvent(env, `webhook_invalid_action action=e status=${status} post_id=${parsed.postId}`);
-      return jsonOk();
-    }
-    await clearInlineKeyboard(env, currentMsgId);
-    await mutatePostsWithRetry(env, `chore(worker): edit start ${parsed.postId}`, (writePosts) => {
-      const writeIdx = findPostIndex(writePosts, parsed.postId);
-      if (writeIdx < 0) {
-        return;
-      }
-      writePosts[writeIdx].status = "editing";
-      writePosts[writeIdx].proposed_edit = null;
-      writePosts[writeIdx].error = null;
+    await handleEdit({
+      env,
+      callbackId,
+      parsed,
+      status,
+      post,
+      currentMsgId,
     });
-    const editPrompt =
-      `✏️ Edit Mode\n\n` +
-      `Current post:\n` +
-      `───────────\n${composedTextOf(post)}\n───────────\n\n` +
-      `Reply with your corrected post text.\n` +
-      `Send "cancel" to exit edit mode.`;
-    await sendPostBotMessage(env, editPrompt);
-    await answerCallbackQuery(env, callbackId, RESPONSE_MESSAGES.CALLBACK_EDIT_MODE_ENABLED);
-    await logEvent(env, `edit_started post_id=${parsed.postId}`);
     return jsonOk();
   }
 
   if (parsed.action === "r") {
-    if (status !== "pending") {
-      await answerCallbackQuery(env, callbackId, RESPONSE_MESSAGES.CALLBACK_ACTION_NOT_ALLOWED);
-      await logEvent(env, `webhook_invalid_action action=r status=${status} post_id=${parsed.postId}`);
-      return jsonOk();
-    }
-    await clearInlineKeyboard(env, currentMsgId);
-    await mutatePostsWithRetry(env, `chore(worker): reject ${parsed.postId}`, (writePosts) => {
-      const writeIdx = findPostIndex(writePosts, parsed.postId);
-      if (writeIdx < 0) {
-        return;
-      }
-      writePosts[writeIdx].status = "rejected";
-      writePosts[writeIdx].error = null;
+    await handleReject({
+      env,
+      callbackId,
+      parsed,
+      status,
+      post,
+      currentMsgId,
     });
-    await sendPostBotMessage(env, `❌ Draft rejected.\n\nTopic: ${topicOf(post)}`);
-    await answerCallbackQuery(env, callbackId, RESPONSE_MESSAGES.CALLBACK_REJECTED);
-    await logEvent(env, `rejection_received post_id=${parsed.postId}`);
     return jsonOk();
   }
 
   if (parsed.action === "y") {
-    if (status !== "confirming_edit") {
-      await answerCallbackQuery(env, callbackId, RESPONSE_MESSAGES.CALLBACK_ACTION_NOT_ALLOWED);
-      await logEvent(env, `webhook_invalid_action action=y status=${status} post_id=${parsed.postId}`);
-      return jsonOk();
-    }
-    const proposed = asString(post.proposed_edit) ?? "";
-    if (!proposed || proposed.length > MAX_TELEGRAM_POST_LENGTH) {
-      await answerCallbackQuery(env, callbackId, RESPONSE_MESSAGES.CALLBACK_INVALID_EDIT_TEXT);
-      await logEvent(env, `webhook_invalid_action action=y invalid_proposed_edit post_id=${parsed.postId}`);
-      return jsonOk();
-    }
-    await clearInlineKeyboard(env, currentMsgId);
-    await mutatePostsWithRetry(env, `chore(worker): confirm edit ${parsed.postId}`, (writePosts) => {
-      const writeIdx = findPostIndex(writePosts, parsed.postId);
-      if (writeIdx < 0) {
-        return;
-      }
-      writePosts[writeIdx].composed_text = proposed;
-      writePosts[writeIdx].proposed_edit = null;
-      writePosts[writeIdx].status = "pending";
-      writePosts[writeIdx].error = null;
+    await handleConfirmEdit({
+      env,
+      callbackId,
+      parsed,
+      status,
+      post,
+      currentMsgId,
     });
-    await resendApprovalMessage(env, parsed.postId);
-    await answerCallbackQuery(env, callbackId, RESPONSE_MESSAGES.CALLBACK_EDIT_APPLIED);
-    await logEvent(env, `edit_confirmed post_id=${parsed.postId}`);
     return jsonOk();
   }
 
   if (parsed.action === "n") {
-    if (status !== "confirming_edit") {
-      await answerCallbackQuery(env, callbackId, RESPONSE_MESSAGES.CALLBACK_ACTION_NOT_ALLOWED);
-      await logEvent(env, `webhook_invalid_action action=n status=${status} post_id=${parsed.postId}`);
-      return jsonOk();
-    }
-    await clearInlineKeyboard(env, currentMsgId);
-    await mutatePostsWithRetry(env, `chore(worker): re-enter edit ${parsed.postId}`, (writePosts) => {
-      const writeIdx = findPostIndex(writePosts, parsed.postId);
-      if (writeIdx < 0) {
-        return;
-      }
-      writePosts[writeIdx].status = "editing";
-      writePosts[writeIdx].proposed_edit = null;
+    await handleReenterEdit({
+      env,
+      callbackId,
+      parsed,
+      status,
+      post,
+      currentMsgId,
     });
-    await sendPostBotMessage(env, RESPONSE_MESSAGES.MESSAGE_EDIT_REENTER_PROMPT);
-    await answerCallbackQuery(env, callbackId, RESPONSE_MESSAGES.CALLBACK_EDIT_REENTER);
-    await logEvent(env, `edit_re_entered post_id=${parsed.postId}`);
     return jsonOk();
   }
 
-  if (status !== "failed") {
-    await answerCallbackQuery(env, callbackId, RESPONSE_MESSAGES.CALLBACK_ACTION_NOT_ALLOWED);
-    await logEvent(env, `webhook_invalid_action action=rt status=${status} post_id=${parsed.postId}`);
-    return jsonOk();
-  }
-  await clearInlineKeyboard(env, currentMsgId);
-  await answerCallbackQuery(env, callbackId, RESPONSE_MESSAGES.CALLBACK_RETRYING_PUBLISH);
-  await mutatePostsWithRetry(env, `chore(worker): retry publish ${parsed.postId}`, (writePosts) => {
-    const writeIdx = findPostIndex(writePosts, parsed.postId);
-    if (writeIdx < 0) {
-      return;
-    }
-    writePosts[writeIdx].publish_attempted_at = nowIso();
-    writePosts[writeIdx].error = null;
+  await handleRetry({
+    env,
+    callbackId,
+    parsed,
+    status,
+    post,
+    currentMsgId,
   });
-  await logEvent(env, `retry_attempted post_id=${parsed.postId}`);
-  await runPublishFlow(env, parsed.postId);
   return jsonOk();
 }
 
-async function handleMessage(message: TelegramMessage, env: Env): Promise<Response> {
+async function handleMessage(
+  message: TelegramMessage,
+  env: Env,
+  idempotencyKey: string | null,
+): Promise<Response> {
   const callerUserId = message.from?.id;
   const callerChatId = message.chat?.id;
 
   if (!isAuthorizedUser(callerUserId, env) || !isAuthorizedChat(callerChatId, env)) {
     await logEvent(env, "webhook_security_violation reason=unauthorized_message");
     return jsonOk();
+  }
+
+  if (idempotencyKey) {
+    const duplicate = await isDuplicateUpdate(env, idempotencyKey);
+    if (duplicate) {
+      await logEvent(env, `duplicate_update_ignored key=${idempotencyKey}`);
+      return jsonOk();
+    }
   }
 
   const rateLimit = await checkRateLimit(env, String(callerUserId));
@@ -486,12 +388,14 @@ export default {
       return new Response(RESPONSE_MESSAGES.HTTP_BAD_REQUEST, { status: 400 });
     }
 
+    const idempotencyKey = idempotencyKeyFromUpdate(update);
+
     try {
       if (update.callback_query) {
-        return await handleCallback(update.callback_query, env);
+        return await handleCallback(update.callback_query, env, idempotencyKey);
       }
       if (update.message) {
-        return await handleMessage(update.message, env);
+        return await handleMessage(update.message, env, idempotencyKey);
       }
       return jsonOk();
     } catch (error) {

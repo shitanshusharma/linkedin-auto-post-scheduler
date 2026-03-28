@@ -66,15 +66,6 @@ def main() -> int:
     if args.from_json:
         payload = json.loads(args.from_json.read_text(encoding="utf-8"))
     else:
-        required = (
-            "post_id",
-            "telegram_message_id",
-            "approval_token",
-            "topic",
-            "hook",
-            "body",
-            "cta",
-        )
         missing = [
             n
             for n, v in (

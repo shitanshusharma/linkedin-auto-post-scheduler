@@ -1,6 +1,7 @@
 export const POSTS_PATH = "posts.json";
 export const MAX_TELEGRAM_POST_LENGTH = 2000;
 export const RATE_LIMIT_MAX_REQUESTS_PER_MINUTE = 20;
+export const IDEMPOTENCY_TTL_SECONDS = 60 * 60 * 24;
 export const CALLBACK_DATA_MAX_BYTES = 64;
 export const LINKEDIN_VERSION = "202603";
 

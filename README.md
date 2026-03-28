@@ -144,6 +144,7 @@ Required by webhook publish flow:
 - `.env` must remain untracked; use GitHub/Cloudflare secret stores for runtime credentials.
 - Rotate leaked credentials immediately (Telegram bot tokens, PATs, LinkedIn tokens).
 - Secret scanning runs in CI via `.github/workflows/secret-scan.yml`.
+- Replay/idempotency validation steps are documented in `docs/ARCHITECTURE.md` under "Manual Replay Validation Checklist".
 - Review `SECURITY.md` for vulnerability reporting and response expectations.
 
 ## Contributing

@@ -1,4 +1,4 @@
-"""Validate and parse LLM JSON output per low-level-design.md §3.3.1."""
+"""Validate and parse LLM JSON output per docs/ARCHITECTURE.md (LLM output contract)."""
 
 from __future__ import annotations
 

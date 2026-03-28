@@ -64,7 +64,15 @@ export async function mutatePostsWithRetry<T>(
 ): Promise<T> {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const { posts, sha } = await readPosts(env);
+    const before = JSON.stringify(posts);
     const result = mutator(posts);
+    const after = JSON.stringify(posts);
+
+    // Skip GitHub write on no-op mutations to avoid avoidable API errors.
+    if (before === after) {
+      return result;
+    }
+
     const write = await writePosts(env, posts, sha, commitMessage);
     if (write.ok) {
       return result;

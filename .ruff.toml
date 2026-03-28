@@ -1,0 +1,2 @@
+[lint]
+per-file-ignores = { "scripts/generate.py" = ["E402"], "scripts/housekeeping.py" = ["E402"], "scripts/recover_draft.py" = ["E402"] }

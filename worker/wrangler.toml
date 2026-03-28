@@ -6,3 +6,7 @@ compatibility_date = "2024-12-01"
 [[kv_namespaces]]
 binding = "RATE_LIMIT_KV"
 id = "55234bc19b484796be45860efcdad919"
+
+[[kv_namespaces]]
+binding = "IDEMPOTENCY_KV"
+id = "1f84bd04a90947509aec170482032e56"
