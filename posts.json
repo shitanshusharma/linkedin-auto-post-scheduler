@@ -4,7 +4,7 @@
     "topic": "Rate Limiting in Distributed Systems",
     "status": "failed",
     "approval_token": "b602c0731d65e6ab",
-    "telegram_message_id": 5,
+    "telegram_message_id": 6,
     "content": {
       "hook": "Ever wondered how your favorite app handles millions of users without crashing?",
       "body": "Rate limiting is the unsung hero behind the seamless experience we often take for granted. It helps manage the load on servers by controlling how many requests a user can make in a certain time frame. For instance, Twitter uses rate limiting to prevent spam and ensure their platform remains responsive. If a user sends too many tweets in a short period, they might get temporarily blocked from sending more. This keeps the platform running smoothly for everyone. \n\nAnother example is the Google Maps API. When developers integrate Google Maps into their apps, they encounter rate limits that prevent any one app from overwhelming the service. This means that while one user is checking directions, another can still access the map without delays. \n\nHere's a simple way to visualize it:\n\n```\nUser Requests:  |---|---|---|---|---|---|---|\nRate Limit:     |---|---|---|\n                 \n```\nIn this example, the user can only make 4 requests within a set time before hitting the limit. This prevents overload and ensures fair use among all users.",
