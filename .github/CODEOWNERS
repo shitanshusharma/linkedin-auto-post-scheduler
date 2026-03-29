@@ -1,2 +1,30 @@
-# Global ownership for all files
+# ------------------------------------------------------------
+# CODEOWNERS
+# NOTE:
+# - Last matching rule wins
+# - Replace/add handles as your team grows
+# ------------------------------------------------------------
+
+# Default owner for everything
 * @shitanshusharma
+
+# CI / repo automation
+.github/ @shitanshusharma
+# .github/ @your-org/team-devops
+
+# Core worker service
+worker/ @shitanshusharma
+# worker/ @your-org/team-backend
+
+# Utility and operational scripts
+scripts/ @shitanshusharma
+# scripts/ @your-org/team-platform
+
+# Architecture and docs
+docs/ @shitanshusharma
+# docs/ @your-org/team-architecture
+
+# Root-level key files
+/README.md @shitanshusharma
+/requirements.txt @shitanshusharma
+/topics.json @shitanshusharma
