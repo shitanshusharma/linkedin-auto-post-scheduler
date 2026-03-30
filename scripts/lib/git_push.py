@@ -9,8 +9,7 @@ from pathlib import Path
 from typing import Any
 from urllib import error, parse, request
 
-DEFAULT_AUTOMATION_BRANCH = "bot/automation-state"
-DEFAULT_BASE_BRANCH = "main"
+from .constants import GIT_AUTOMATION
 
 
 def _github_token() -> str:
@@ -18,11 +17,11 @@ def _github_token() -> str:
 
 
 def _automation_branch() -> str:
-    return os.environ.get("AUTOMATION_BRANCH", "").strip() or DEFAULT_AUTOMATION_BRANCH
+    return os.environ.get("AUTOMATION_BRANCH", "").strip() or GIT_AUTOMATION.DEFAULT_AUTOMATION_BRANCH
 
 
 def _base_branch() -> str:
-    return os.environ.get("AUTOMATION_BASE_BRANCH", "").strip() or DEFAULT_BASE_BRANCH
+    return os.environ.get("AUTOMATION_BASE_BRANCH", "").strip() or GIT_AUTOMATION.DEFAULT_BASE_BRANCH
 
 
 def _github_api_request(

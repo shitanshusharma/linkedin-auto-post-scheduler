@@ -13,6 +13,7 @@ import {
   ERROR_CODES,
   IDEMPOTENCY_TTL_SECONDS,
   MAX_TELEGRAM_POST_LENGTH,
+  POST_STATUSES,
   RATE_LIMIT_MAX_REQUESTS_PER_MINUTE,
   RESPONSE_MESSAGES,
 } from "./constants";
@@ -87,7 +88,7 @@ function isAuthorizedChat(chatId: number | undefined, env: Env): boolean {
 }
 
 function activeEditingPost(posts: JsonObject[]): JsonObject | null {
-  return posts.find((post) => statusOf(post) === "editing") ?? null;
+  return posts.find((post) => statusOf(post) === POST_STATUSES.EDITING) ?? null;
 }
 
 function idempotencyKeyFromUpdate(update: TelegramUpdate): string | null {
@@ -319,7 +320,7 @@ async function handleMessage(
       if (idx < 0) {
         return;
       }
-      writePosts[idx].status = "pending";
+      writePosts[idx].status = POST_STATUSES.PENDING;
       writePosts[idx].proposed_edit = null;
     });
     await resendApprovalMessage(env, postId);
@@ -337,7 +338,7 @@ async function handleMessage(
     if (idx < 0) {
       return;
     }
-    writePosts[idx].status = "confirming_edit";
+    writePosts[idx].status = POST_STATUSES.CONFIRMING_EDIT;
     writePosts[idx].proposed_edit = trimmed;
   });
 

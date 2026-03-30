@@ -24,6 +24,7 @@ if str(_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR))
 
 from lib.git_push import commit_and_push, should_auto_push
+from lib.constants import ACTIVE_POST_STATUSES
 from lib.paths import repo_root
 from lib.post_record import build_post
 from lib.repo_json import read_json, write_json
@@ -137,7 +138,7 @@ def main() -> int:
         telegram_message_id=telegram_message_id,
     )
 
-    if existing is not None and existing.get("status") != "pending":
+    if existing is not None and existing.get("status") != ACTIVE_POST_STATUSES.PENDING:
         print(
             f"Post {post_id} exists with status {existing.get('status')} — refuse to overwrite",
             file=sys.stderr,

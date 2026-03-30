@@ -6,6 +6,18 @@ export const RATE_LIMIT_MAX_REQUESTS_PER_MINUTE = 20;
 export const IDEMPOTENCY_TTL_SECONDS = 60 * 60 * 24;
 export const CALLBACK_DATA_MAX_BYTES = 64;
 export const LINKEDIN_VERSION = "202603";
+export const WORKER_SYNC_PR_TITLE = "chore(worker): sync automation state";
+export const WORKER_SYNC_PR_BODY = "Automated PR for Worker state updates (`posts.json`).";
+export const POST_STATUSES = {
+  PENDING: "pending",
+  EDITING: "editing",
+  CONFIRMING_EDIT: "confirming_edit",
+  APPROVED: "approved",
+  REJECTED: "rejected",
+  POSTED: "posted",
+  FAILED: "failed",
+  EXPIRED: "expired",
+} as const;
 
 export const API_URLS = {
   TELEGRAM_BOT_API_BASE: "https://api.telegram.org/bot",

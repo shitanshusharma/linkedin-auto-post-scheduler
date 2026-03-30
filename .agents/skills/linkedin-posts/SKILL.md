@@ -2,7 +2,7 @@
 name: linkedin-posts
 description: When the user wants to create LinkedIn post copy or optimize for LinkedIn. Also use when the user mentions "LinkedIn post," "LinkedIn article," "professional post," "post to LinkedIn," "LinkedIn content," "LinkedIn copy," "B2B LinkedIn," "LinkedIn engagement," or "LinkedIn marketing." For LinkedIn ads, use linkedin-ads.
 metadata:
-  version: 1.1.1
+  version: 1.1.2
 ---
 
 # Platforms: LinkedIn
@@ -55,6 +55,42 @@ This skill enables agents to generate LinkedIn post copy optimized for engagemen
 - **Polls & PDFs**: Highest reach
 - **Post frequency**: Weekly minimum for companies
 - **Alt text**: Add for accessibility
+- **Examples**: Use **exactly one** concrete example per post (do not include multiple examples)
+
+## Algorithm Topics (Do Not Assume)
+
+Use this section only when the post topic includes an algorithm/process.
+
+- If the algorithm is clearly known from the provided context, include:
+  - one short algorithm explanation,
+  - exactly one example,
+  - one ASCII diagram.
+- If the algorithm is unclear, incomplete, or ambiguous:
+  - do **not** invent steps,
+  - do **not** include a guessed algorithm diagram,
+  - ask for clarification or skip algorithm-specific content.
+
+ASCII decision flow:
+
+```text
+[Post topic]
+     |
+     v
+[Algorithm clearly known?] -- No --> [Skip algorithm details / ask clarification]
+     |
+    Yes
+     v
+[Write short algorithm summary]
+     |
+     v
+[Add exactly ONE example]
+     |
+     v
+[Add ASCII diagram]
+     |
+     v
+[Finalize post]
+```
 
 ## Output Format
 
@@ -64,6 +100,7 @@ When generating LinkedIn copy, provide:
 2. **Full post** with character count
 3. **Hashtags** (3→; end of post)
 4. **Image specs** (if design agent needs dimensions)
+5. **If algorithm is clearly known**: include one ASCII diagram and only one example in the post
 
 ## Related Skills
 

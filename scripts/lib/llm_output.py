@@ -6,7 +6,7 @@ import json
 import re
 from typing import Any, TypedDict
 
-REQUIRED_KEYS = frozenset({"hook", "body", "cta", "risk_flags"})
+from lib.constants import LLM_OUTPUT
 
 
 class LlmPostOutput(TypedDict):
@@ -52,8 +52,8 @@ def _has_html_tags(s: str) -> bool:
 
 def validate_llm_output(data: dict[str, Any]) -> tuple[bool, str]:
     """Return (ok, error_message)."""
-    if set(data.keys()) != REQUIRED_KEYS:
-        return False, f"keys must be exactly {sorted(REQUIRED_KEYS)}, got {sorted(data.keys())}"
+    if set(data.keys()) != LLM_OUTPUT.REQUIRED_KEYS:
+        return False, f"keys must be exactly {sorted(LLM_OUTPUT.REQUIRED_KEYS)}, got {sorted(data.keys())}"
 
     hook = data["hook"]
     body = data["body"]
@@ -65,9 +65,13 @@ def validate_llm_output(data: dict[str, Any]) -> tuple[bool, str]:
     if not isinstance(risk_flags, list) or not all(isinstance(x, str) for x in risk_flags):
         return False, "risk_flags must be an array of strings"
 
-    if len(hook) > 150 or len(body) > 1650 or len(cta) > 200:
+    if (
+        len(hook) > LLM_OUTPUT.MAX_HOOK_CHARS
+        or len(body) > LLM_OUTPUT.MAX_BODY_CHARS
+        or len(cta) > LLM_OUTPUT.MAX_CTA_CHARS
+    ):
         return False, "length limits exceeded"
-    if len(hook) + len(body) + len(cta) > 2000:
+    if len(hook) + len(body) + len(cta) > LLM_OUTPUT.MAX_TOTAL_CHARS:
         return False, "combined length > 2000"
     for part in (hook, body, cta):
         if _has_html_tags(part):

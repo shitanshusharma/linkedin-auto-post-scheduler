@@ -1,4 +1,4 @@
-import { MAX_TELEGRAM_POST_LENGTH, RESPONSE_MESSAGES } from "./constants";
+import { MAX_TELEGRAM_POST_LENGTH, POST_STATUSES, RESPONSE_MESSAGES } from "./constants";
 import { findPostIndex, mutatePostsWithRetry, readPosts } from "./github_posts";
 import { publishToLinkedIn } from "./linkedin_client";
 import { logEvent } from "./logger";
@@ -79,7 +79,7 @@ async function runPublishFlow(env: Env, postId: string): Promise<void> {
       if (writeIdx < 0) {
         return;
       }
-      writePosts[writeIdx].status = "posted";
+      writePosts[writeIdx].status = POST_STATUSES.POSTED;
       writePosts[writeIdx].posted_at = nowIso();
       writePosts[writeIdx].linkedin_post_id = publish.linkedinPostId ?? null;
       writePosts[writeIdx].error = null;
@@ -95,7 +95,7 @@ async function runPublishFlow(env: Env, postId: string): Promise<void> {
     if (writeIdx < 0) {
       return;
     }
-    writePosts[writeIdx].status = "failed";
+    writePosts[writeIdx].status = POST_STATUSES.FAILED;
     writePosts[writeIdx].error = publish.error;
   });
   const text =
@@ -126,7 +126,7 @@ export async function handleApprove({
   status,
   currentMsgId,
 }: HandlerContext): Promise<void> {
-  if (status !== "pending") {
+  if (status !== POST_STATUSES.PENDING) {
     await answerCallbackQuery(env, callbackId, RESPONSE_MESSAGES.CALLBACK_ACTION_NOT_ALLOWED);
     await logEvent(env, `webhook_invalid_action action=a status=${status} post_id=${parsed.postId}`);
     return;
@@ -137,10 +137,10 @@ export async function handleApprove({
     if (writeIdx < 0) {
       return false;
     }
-    if (asString(writePosts[writeIdx].status) !== "pending") {
+    if (asString(writePosts[writeIdx].status) !== POST_STATUSES.PENDING) {
       return false;
     }
-    writePosts[writeIdx].status = "approved";
+    writePosts[writeIdx].status = POST_STATUSES.APPROVED;
     writePosts[writeIdx].approved_at = nowIso();
     writePosts[writeIdx].publish_attempted_at = nowIso();
     writePosts[writeIdx].error = null;
@@ -167,7 +167,7 @@ export async function handleEdit({
   post,
   currentMsgId,
 }: HandlerContext): Promise<void> {
-  if (status !== "pending") {
+  if (status !== POST_STATUSES.PENDING) {
     await answerCallbackQuery(env, callbackId, RESPONSE_MESSAGES.CALLBACK_ACTION_NOT_ALLOWED);
     await logEvent(env, `webhook_invalid_action action=e status=${status} post_id=${parsed.postId}`);
     return;
@@ -178,7 +178,7 @@ export async function handleEdit({
     if (writeIdx < 0) {
       return;
     }
-    writePosts[writeIdx].status = "editing";
+    writePosts[writeIdx].status = POST_STATUSES.EDITING;
     writePosts[writeIdx].proposed_edit = null;
     writePosts[writeIdx].error = null;
   });
@@ -201,7 +201,7 @@ export async function handleReject({
   post,
   currentMsgId,
 }: HandlerContext): Promise<void> {
-  if (status !== "pending") {
+  if (status !== POST_STATUSES.PENDING) {
     await answerCallbackQuery(env, callbackId, RESPONSE_MESSAGES.CALLBACK_ACTION_NOT_ALLOWED);
     await logEvent(env, `webhook_invalid_action action=r status=${status} post_id=${parsed.postId}`);
     return;
@@ -212,7 +212,7 @@ export async function handleReject({
     if (writeIdx < 0) {
       return;
     }
-    writePosts[writeIdx].status = "rejected";
+    writePosts[writeIdx].status = POST_STATUSES.REJECTED;
     writePosts[writeIdx].error = null;
   });
   await sendPostBotMessage(env, `❌ Draft rejected.\n\nTopic: ${topicOf(post)}`);
@@ -227,7 +227,7 @@ export async function handleRetry({
   status,
   currentMsgId,
 }: HandlerContext): Promise<void> {
-  if (status !== "failed") {
+  if (status !== POST_STATUSES.FAILED) {
     await answerCallbackQuery(env, callbackId, RESPONSE_MESSAGES.CALLBACK_ACTION_NOT_ALLOWED);
     await logEvent(env, `webhook_invalid_action action=rt status=${status} post_id=${parsed.postId}`);
     return;
@@ -254,7 +254,7 @@ export async function handleConfirmEdit({
   post,
   currentMsgId,
 }: HandlerContext): Promise<void> {
-  if (status !== "confirming_edit") {
+  if (status !== POST_STATUSES.CONFIRMING_EDIT) {
     await answerCallbackQuery(env, callbackId, RESPONSE_MESSAGES.CALLBACK_ACTION_NOT_ALLOWED);
     await logEvent(env, `webhook_invalid_action action=y status=${status} post_id=${parsed.postId}`);
     return;
@@ -275,7 +275,7 @@ export async function handleConfirmEdit({
     }
     writePosts[writeIdx].composed_text = proposed;
     writePosts[writeIdx].proposed_edit = null;
-    writePosts[writeIdx].status = "pending";
+    writePosts[writeIdx].status = POST_STATUSES.PENDING;
     writePosts[writeIdx].error = null;
   });
   await resendApprovalMessage(env, parsed.postId);
@@ -290,7 +290,7 @@ export async function handleReenterEdit({
   status,
   currentMsgId,
 }: HandlerContext): Promise<void> {
-  if (status !== "confirming_edit") {
+  if (status !== POST_STATUSES.CONFIRMING_EDIT) {
     await answerCallbackQuery(env, callbackId, RESPONSE_MESSAGES.CALLBACK_ACTION_NOT_ALLOWED);
     await logEvent(env, `webhook_invalid_action action=n status=${status} post_id=${parsed.postId}`);
     return;
@@ -302,7 +302,7 @@ export async function handleReenterEdit({
     if (writeIdx < 0) {
       return;
     }
-    writePosts[writeIdx].status = "editing";
+    writePosts[writeIdx].status = POST_STATUSES.EDITING;
     writePosts[writeIdx].proposed_edit = null;
   });
   await sendPostBotMessage(env, RESPONSE_MESSAGES.MESSAGE_EDIT_REENTER_PROMPT);

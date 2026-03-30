@@ -4,6 +4,8 @@ import {
   DEFAULT_BASE_BRANCH,
   ERROR_CODES,
   POSTS_PATH,
+  WORKER_SYNC_PR_BODY,
+  WORKER_SYNC_PR_TITLE,
 } from "./constants";
 import { asString, decodeBase64Utf8, encodeBase64Utf8 } from "./utils";
 import { Env, GithubContentsResponse, JsonArray, JsonObject, ReadPostsResult, WritePostsResult } from "./types";
@@ -144,10 +146,10 @@ async function ensureOpenPullRequest(env: Env): Promise<void> {
     method: "POST",
     headers: ghHeaders(env),
     body: JSON.stringify({
-      title: "chore(worker): sync automation state",
+      title: WORKER_SYNC_PR_TITLE,
       head: headBranch,
       base,
-      body: "Automated PR for Worker state updates (`posts.json`).",
+      body: WORKER_SYNC_PR_BODY,
     }),
   });
   if (createResponse.ok) {

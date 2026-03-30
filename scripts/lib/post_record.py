@@ -6,11 +6,13 @@ import secrets
 from datetime import datetime, timezone
 from typing import Any
 
+from .constants import ACTIVE_POST_STATUSES, POST_RECORD
+
 
 def next_post_id(existing_posts: list[dict[str, Any]]) -> str:
     """Deterministic id: post_YYYY_MM_DD_NNN (NNN increments per day)."""
     now = datetime.now(timezone.utc)
-    prefix = now.strftime("post_%Y_%m_%d_")
+    prefix = now.strftime(POST_RECORD.POST_ID_PREFIX_DATE_FORMAT)
     max_n = 0
     for p in existing_posts:
         pid = p.get("id")
@@ -21,11 +23,11 @@ def next_post_id(existing_posts: list[dict[str, Any]]) -> str:
             max_n = max(max_n, int(suffix))
         except ValueError:
             continue
-    return f"{prefix}{max_n + 1:03d}"
+    return f"{prefix}{max_n + 1:0{POST_RECORD.POST_ID_SEQUENCE_WIDTH}d}"
 
 
 def new_approval_token() -> str:
-    return secrets.token_hex(8)
+    return secrets.token_hex(POST_RECORD.APPROVAL_TOKEN_NUM_BYTES)
 
 
 def compose_text(hook: str, body: str, cta: str) -> str:
@@ -48,7 +50,7 @@ def build_post(
     return {
         "id": post_id,
         "topic": topic_title,
-        "status": "pending",
+        "status": ACTIVE_POST_STATUSES.PENDING,
         "approval_token": approval_token,
         "telegram_message_id": telegram_message_id,
         "content": {"hook": hook, "body": body, "cta": cta},
