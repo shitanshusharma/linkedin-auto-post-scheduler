@@ -28,7 +28,7 @@ if str(_SCRIPT_DIR) not in sys.path:
 from common.logger import get_logger
 from common.paths import repo_root
 from common.repo_json import read_json, write_json
-from core.constants import ACTIVE_POST_STATUSES, ERROR_MESSAGES
+from core.constants import ACTIVE_POST_STATUSES, ERROR_MESSAGES, FEATURE_FLAGS, GIT_ROUTING
 from core.llm import ensure_linkedin_skill_ready, generate_post_json
 from core.llm_output import LlmPostOutput, to_llm_post_output, validate_llm_output
 from core.post_record import build_post, compose_text, new_approval_token, next_post_id
@@ -36,6 +36,35 @@ from integrations.git_push import commit_and_push, should_auto_push
 from integrations.telegram import inline_approve_edit_reject, send_message
 
 LOGGER = get_logger("generate")
+
+
+def _read_repo_config(root: Path) -> dict:
+    try:
+        raw = read_json(root / GIT_ROUTING.CONFIG_PATH)
+    except Exception:  # noqa: BLE001
+        return {}
+    return raw if isinstance(raw, dict) else {}
+
+
+def _config_bool(config: dict, key: str, default: bool) -> bool:
+    value = config.get(key)
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"1", "true", "yes", "on"}:
+            return True
+        if lowered in {"0", "false", "no", "off"}:
+            return False
+    return default
+
+
+def _config_string(config: dict, key: str) -> str | None:
+    value = config.get(key)
+    if not isinstance(value, str):
+        return None
+    cleaned = value.strip()
+    return cleaned or None
 
 
 def _draft_message(topic: str, composed: str, risk_flags: list[str]) -> str:
@@ -177,6 +206,7 @@ def main() -> int:
         load_dotenv(repo_root() / ".env")
 
     root = repo_root()
+    config = _read_repo_config(root)
     posts_path = root / "posts.json"
     topics_path = root / "topics.json"
 
@@ -194,12 +224,25 @@ def main() -> int:
         LOGGER.error(f"Invalid WF_ACTION: {action}")
         return 1
 
-    for p in posts:
-        if isinstance(p, dict) and p.get("status") in ACTIVE_POST_STATUSES.ALL:
-            pid = p.get("id", "?")
-            LOGGER.audit(f"generation_skipped: active post exists ({pid})")
-            LOGGER.info(f"Skip: active post {pid}")
-            return 0
+    if not _config_bool(config, FEATURE_FLAGS.GENERATION_ENABLED_KEY, FEATURE_FLAGS.DEFAULT_TRUE):
+        LOGGER.audit("generation_skipped: generation disabled in config")
+        LOGGER.info("Skip: generation is disabled by config")
+        return 0
+
+    configured_model = _config_string(config, FEATURE_FLAGS.DEFAULT_GITHUB_MODEL_KEY)
+    if configured_model and not os.environ.get("GITHUB_MODEL", "").strip():
+        os.environ["GITHUB_MODEL"] = configured_model
+
+    if _config_bool(config, FEATURE_FLAGS.SINGLE_ACTIVE_POST_KEY, FEATURE_FLAGS.DEFAULT_TRUE):
+        for p in posts:
+            if isinstance(p, dict) and p.get("status") in ACTIVE_POST_STATUSES.ALL:
+                pid = p.get("id", "?")
+                LOGGER.audit(f"generation_skipped: active post exists ({pid})")
+                LOGGER.info(f"Skip: active post {pid}")
+                return 0
+    else:
+        LOGGER.audit("single_active_post_disabled: proceeding despite active posts")
+        LOGGER.info("single_active_post disabled in config; allowing a new draft")
 
     topics = read_json(topics_path)
     if not isinstance(topics, list) or not topics:

@@ -61,8 +61,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      AUTOMATION_BRANCH: bot/automation-state
-      AUTOMATION_BASE_BRANCH: main
       WF_ACTION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.action || 'generate' }}
       WF_POST_ID: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.post_id || '' }}
       # Secret-dependent values are empty in forks unless users configure them.
@@ -78,9 +76,41 @@ jobs:
       - name: Prepare automation branch checkout
         shell: bash
         run: |
-          git fetch origin "${AUTOMATION_BRANCH}:${AUTOMATION_BRANCH}" || true
-          if git show-ref --verify --quiet "refs/heads/${AUTOMATION_BRANCH}"; then
-            git checkout "${AUTOMATION_BRANCH}"
+          mapfile -t git_route < <(python3 - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path("config.json")
+          default_target = "bot"
+          default_branch = "bot/automation-state"
+          if not path.exists():
+              print(default_target)
+              print(default_branch)
+              raise SystemExit(0)
+          try:
+              raw = json.loads(path.read_text(encoding="utf-8"))
+          except Exception:
+              print(default_target)
+              print(default_branch)
+              raise SystemExit(0)
+          if not isinstance(raw, dict):
+              print(default_target)
+              print(default_branch)
+              raise SystemExit(0)
+          value = str(raw.get("git_write_target", "")).strip().lower()
+          branch = str(raw.get("git_automation_branch", "")).strip() or default_branch
+          print("main" if value == "main" else "bot")
+          print(branch)
+          PY
+          )
+          write_target="${git_route[0]}"
+          automation_branch="${git_route[1]}"
+          if [[ "${write_target}" == "main" ]]; then
+            echo "config.json git_write_target=main; using main checkout"
+          else
+            git fetch origin "${automation_branch}:${automation_branch}" || true
+            if git show-ref --verify --quiet "refs/heads/${automation_branch}"; then
+              git checkout "${automation_branch}"
+            fi
           fi
 
       - uses: actions/setup-python@v5

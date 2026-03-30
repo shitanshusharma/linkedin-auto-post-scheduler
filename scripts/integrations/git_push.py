@@ -9,19 +9,53 @@ from pathlib import Path
 from typing import Any
 from urllib import error, parse, request
 
-from core.constants import GIT_AUTOMATION
+from core.constants import GIT_AUTOMATION, GIT_ROUTING
 
 
 def _github_token() -> str:
     return os.environ.get("GH_TOKEN", "").strip() or os.environ.get("GITHUB_TOKEN", "").strip()
 
 
-def _automation_branch() -> str:
-    return os.environ.get("AUTOMATION_BRANCH", "").strip() or GIT_AUTOMATION.DEFAULT_AUTOMATION_BRANCH
+def _load_repo_config(repo_root: Path) -> dict[str, Any]:
+    config_path = repo_root / GIT_ROUTING.CONFIG_PATH
+    if not config_path.exists():
+        return {}
+    try:
+        raw = json.loads(config_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not isinstance(raw, dict):
+        return {}
+    return raw
 
 
-def _base_branch() -> str:
-    return os.environ.get("AUTOMATION_BASE_BRANCH", "").strip() or GIT_AUTOMATION.DEFAULT_BASE_BRANCH
+def _routing_mode_from_config(config: dict[str, Any]) -> str:
+    value = str(config.get(GIT_ROUTING.CONFIG_KEY, "")).strip().lower()
+    if value == GIT_ROUTING.MODE_MAIN:
+        return GIT_ROUTING.MODE_MAIN
+    if value in {"bot", "bot_branch", "automation_branch"}:
+        return GIT_ROUTING.MODE_BOT
+    return GIT_ROUTING.DEFAULT_MODE
+
+
+def _base_branch(config: dict[str, Any]) -> str:
+    env_value = os.environ.get("AUTOMATION_BASE_BRANCH", "").strip()
+    if env_value:
+        return env_value
+    cfg_value = str(config.get(GIT_ROUTING.BASE_BRANCH_KEY, "")).strip()
+    if cfg_value:
+        return cfg_value
+    return GIT_AUTOMATION.DEFAULT_BASE_BRANCH
+
+
+def _automation_branch(config: dict[str, Any]) -> str:
+    env_value = os.environ.get("AUTOMATION_BRANCH", "").strip()
+    if env_value:
+        return env_value
+    cfg_value = str(config.get(GIT_ROUTING.AUTOMATION_BRANCH_KEY, "")).strip()
+    if cfg_value:
+        return cfg_value
+    return GIT_AUTOMATION.DEFAULT_AUTOMATION_BRANCH
 
 
 def _github_api_request(
@@ -133,22 +167,28 @@ def commit_and_push(repo_root: Path, paths: list[str], message: str) -> bool:
     subprocess.run(["git", "commit", "-m", message], cwd=repo_root, check=True)
 
     if in_actions:
-        branch = _automation_branch()
-        base_branch = _base_branch()
+        config = _load_repo_config(repo_root)
+        branch = _automation_branch(config)
+        base_branch = _base_branch(config)
+        routing_mode = _routing_mode_from_config(config)
         repo = os.environ.get("GITHUB_REPOSITORY", "").strip()
         token = _github_token()
         if not repo or not token:
             raise RuntimeError("GITHUB_REPOSITORY and GITHUB_TOKEN/GH_TOKEN are required in Actions")
 
-        _push_head_to_branch(repo_root, branch)
-        pr_url = _create_or_reuse_pull_request(
-            repo=repo,
-            token=token,
-            head=branch,
-            base=base_branch,
-            title=message,
-        )
-        print(f"Opened or reused PR: {pr_url}", flush=True)
+        if routing_mode == GIT_ROUTING.MODE_MAIN:
+            _push_head_to_branch(repo_root, base_branch)
+            print(f"Pushed directly to {base_branch} (config {GIT_ROUTING.CONFIG_KEY}={routing_mode})", flush=True)
+        else:
+            _push_head_to_branch(repo_root, branch)
+            pr_url = _create_or_reuse_pull_request(
+                repo=repo,
+                token=token,
+                head=branch,
+                base=base_branch,
+                title=message,
+            )
+            print(f"Opened or reused PR: {pr_url}", flush=True)
     else:
         subprocess.run(["git", "push", "origin", "HEAD"], cwd=repo_root, check=True)
 

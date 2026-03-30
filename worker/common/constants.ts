@@ -1,4 +1,5 @@
 export const POSTS_PATH = "posts.json";
+export const CONFIG_PATH = "config.json";
 export const DEFAULT_AUTOMATION_BRANCH = "bot/automation-state";
 export const DEFAULT_BASE_BRANCH = "main";
 export const MAX_TELEGRAM_POST_LENGTH = 2000;
@@ -8,6 +9,13 @@ export const CALLBACK_DATA_MAX_BYTES = 64;
 export const LINKEDIN_VERSION = "202603";
 export const WORKER_SYNC_PR_TITLE = "chore(worker): sync automation state";
 export const WORKER_SYNC_PR_BODY = "Automated PR for Worker state updates (`posts.json`).";
+export const GIT_WRITE_TARGET_KEY = "git_write_target";
+export const GIT_BASE_BRANCH_KEY = "git_base_branch";
+export const GIT_AUTOMATION_BRANCH_KEY = "git_automation_branch";
+export const GIT_WRITE_TARGETS = {
+  MAIN: "main",
+  BOT: "bot",
+} as const;
 export const POST_STATUSES = {
   PENDING: "pending",
   EDITING: "editing",

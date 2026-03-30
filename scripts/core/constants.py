@@ -59,6 +59,24 @@ class GIT_AUTOMATION:
     DEFAULT_BASE_BRANCH = "main"
 
 
+class GIT_ROUTING:
+    CONFIG_PATH = "config.json"
+    CONFIG_KEY = "git_write_target"
+    BASE_BRANCH_KEY = "git_base_branch"
+    AUTOMATION_BRANCH_KEY = "git_automation_branch"
+    MODE_MAIN = "main"
+    MODE_BOT = "bot"
+    DEFAULT_MODE = MODE_BOT
+
+
+class FEATURE_FLAGS:
+    GENERATION_ENABLED_KEY = "generation_enabled"
+    HOUSEKEEPING_ENABLED_KEY = "housekeeping_enabled"
+    SINGLE_ACTIVE_POST_KEY = "single_active_post"
+    DEFAULT_GITHUB_MODEL_KEY = "default_github_model"
+    DEFAULT_TRUE = True
+
+
 class POST_RECORD:
     POST_ID_PREFIX_DATE_FORMAT = "post_%Y_%m_%d_"
     POST_ID_SEQUENCE_WIDTH = 3
@@ -77,6 +95,9 @@ class POST_STATUSES:
 
 
 class HOUSEKEEPING_WINDOWS_HOURS:
+    EXPIRY_KEY = "housekeeping_expiry_hours"
+    REMINDER_1_KEY = "housekeeping_reminder_1_hours"
+    REMINDER_2_KEY = "housekeeping_reminder_2_hours"
     EXPIRY = 48.0
     REMINDER_1_START = 12.0
     REMINDER_1_END = 24.0
@@ -85,6 +106,9 @@ class HOUSEKEEPING_WINDOWS_HOURS:
 
 
 class TOKEN_REMINDER_DAYS:
+    LINKEDIN_WARNING_KEY = "linkedin_warning_days"
+    LINKEDIN_URGENT_KEY = "linkedin_urgent_days"
+    PAT_WARNING_KEY = "pat_warning_days"
     LINKEDIN_WARNING = 50
     LINKEDIN_URGENT = 58
     PAT_WARNING = 80

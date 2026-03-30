@@ -1,4 +1,22 @@
 {
-    "linkedin_token_refreshed_at": "2026-03-27T00:00:00Z",
-    "pat_created_at": "2026-03-27T00:00:00Z"
-  }
+  "__comment_format": "JSON does not support native comments. Use __comment_* keys for inline guidance.",
+  "linkedin_token_refreshed_at": "2026-03-27T00:00:00Z",
+  "pat_created_at": "2026-03-27T00:00:00Z",
+  "__comment_git_routing": "Recommended: keep git_write_target=bot for protected repositories. Use main only when direct pushes are allowed.",
+  "git_write_target": "main",
+  "git_base_branch": "main",
+  "git_automation_branch": "bot/automation-state",
+  "__comment_feature_flags": "Set false to disable job behavior without editing workflows.",
+  "generation_enabled": true,
+  "housekeeping_enabled": true,
+  "single_active_post": true,
+  "default_github_model": "openai/gpt-4o-mini",
+  "__comment_housekeeping_windows": "Hours since draft creation when reminders and expiry should trigger.",
+  "housekeeping_reminder_1_hours": 12,
+  "housekeeping_reminder_2_hours": 24,
+  "housekeeping_expiry_hours": 48,
+  "__comment_token_thresholds": "Days since token timestamps when reminders should trigger.",
+  "linkedin_warning_days": 50,
+  "linkedin_urgent_days": 58,
+  "pat_warning_days": 80
+}

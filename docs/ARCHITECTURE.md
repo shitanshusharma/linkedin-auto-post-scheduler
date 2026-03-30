@@ -93,9 +93,16 @@ Allowed statuses:
 ### 4.3 Topic/config contracts
 
 - `topics.json`: list of `{ id, title, used }`
-- `config.json`: token rotation timestamps, including:
+- `config.json`: token rotation timestamps, git routing, feature flags, and housekeeping thresholds, including:
   - `linkedin_token_refreshed_at`
   - `pat_created_at`
+  - `git_write_target` (`bot` for automation-branch+PR, `main` for direct writes)
+  - `git_base_branch`
+  - `git_automation_branch`
+  - `generation_enabled`, `housekeeping_enabled`, `single_active_post`
+  - `default_github_model`
+  - `housekeeping_reminder_1_hours`, `housekeeping_reminder_2_hours`, `housekeeping_expiry_hours`
+  - `linkedin_warning_days`, `linkedin_urgent_days`, `pat_warning_days`
 
 ## 5) Decision Engine (State Machine)
 
@@ -113,7 +120,7 @@ Guardrails:
 - Action must match current status.
 - Callback token must match post token.
 - Telegram sender must match configured `TELEGRAM_USER_ID`.
-- Only one active post is allowed (`pending`, `editing`, `confirming_edit` block new generation).
+- Single active post protection is configurable via `config.json` (`single_active_post`).
 
 ## 6) Publish Flow (LinkedIn)
 

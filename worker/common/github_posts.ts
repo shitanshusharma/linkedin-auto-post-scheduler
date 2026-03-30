@@ -1,8 +1,13 @@
 import {
   API_URLS,
+  CONFIG_PATH,
   DEFAULT_AUTOMATION_BRANCH,
   DEFAULT_BASE_BRANCH,
   ERROR_CODES,
+  GIT_AUTOMATION_BRANCH_KEY,
+  GIT_BASE_BRANCH_KEY,
+  GIT_WRITE_TARGET_KEY,
+  GIT_WRITE_TARGETS,
   POSTS_PATH,
   WORKER_SYNC_PR_BODY,
   WORKER_SYNC_PR_TITLE,
@@ -21,20 +26,24 @@ function ghHeaders(env: Env): HeadersInit {
   };
 }
 
-function stateBranch(env: Env): string {
-  const branch = env.GH_STATE_BRANCH?.trim();
-  if (branch) {
-    return branch;
-  }
-  return DEFAULT_AUTOMATION_BRANCH;
+type GitWriteMode = (typeof GIT_WRITE_TARGETS)[keyof typeof GIT_WRITE_TARGETS];
+
+interface GitRoute {
+  mode: GitWriteMode;
+  stateBranch: string;
+  baseBranch: string;
 }
 
-function baseBranch(env: Env): string {
-  const branch = env.GH_BASE_BRANCH?.trim();
-  if (branch) {
-    return branch;
+function configString(config: JsonObject | null, key: string): string | null {
+  if (!config) {
+    return null;
   }
-  return DEFAULT_BASE_BRANCH;
+  const value = asString(config[key]);
+  if (!value) {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
 }
 
 function githubRepoApiBase(env: Env): string {
@@ -46,11 +55,52 @@ function githubContentsUrl(env: Env, path: string, ref: string): string {
   return `${githubRepoApiBase(env)}/contents/${path}?${query}`;
 }
 
-function manualPullRequestUrl(env: Env): string {
-  const branch = stateBranch(env);
-  const base = baseBranch(env);
-  const query = new URLSearchParams({ base }).toString();
-  return `https://github.com/${env.GH_REPO}/pull/new/${branch}?${query}`;
+function manualPullRequestUrl(env: Env, route: GitRoute): string {
+  const query = new URLSearchParams({ base: route.baseBranch }).toString();
+  return `https://github.com/${env.GH_REPO}/pull/new/${route.stateBranch}?${query}`;
+}
+
+function normalizeGitWriteMode(value: unknown): GitWriteMode | null {
+  const v = String(value ?? "").trim().toLowerCase();
+  if (v === GIT_WRITE_TARGETS.MAIN) {
+    return GIT_WRITE_TARGETS.MAIN;
+  }
+  if (v === GIT_WRITE_TARGETS.BOT || v === "bot_branch" || v === "automation_branch") {
+    return GIT_WRITE_TARGETS.BOT;
+  }
+  return null;
+}
+
+async function readRepoConfig(env: Env, ref: string): Promise<JsonObject | null> {
+  const response = await fetch(githubContentsUrl(env, CONFIG_PATH, ref), {
+    method: "GET",
+    headers: ghHeaders(env),
+  });
+  if (!response.ok) {
+    return null;
+  }
+  try {
+    const data = (await response.json()) as GithubContentsResponse;
+    const raw = decodeBase64Utf8(data.content);
+    const parsed = JSON.parse(raw) as unknown;
+    return asObject(parsed);
+  } catch {
+    return null;
+  }
+}
+
+async function resolveGitRoute(env: Env): Promise<GitRoute> {
+  const envBase = env.GH_BASE_BRANCH?.trim();
+  const baseSeed = envBase || DEFAULT_BASE_BRANCH;
+  const config = await readRepoConfig(env, baseSeed);
+  const base = envBase || configString(config, GIT_BASE_BRANCH_KEY) || DEFAULT_BASE_BRANCH;
+  const mode = normalizeGitWriteMode(config?.[GIT_WRITE_TARGET_KEY]) ?? GIT_WRITE_TARGETS.BOT;
+  const envState = env.GH_STATE_BRANCH?.trim();
+  const stateBranch = envState || configString(config, GIT_AUTOMATION_BRANCH_KEY) || DEFAULT_AUTOMATION_BRANCH;
+  if (mode === GIT_WRITE_TARGETS.MAIN) {
+    return { mode, stateBranch: base, baseBranch: base };
+  }
+  return { mode, stateBranch, baseBranch: base };
 }
 
 function asObject(value: unknown): JsonObject | null {
@@ -84,9 +134,9 @@ async function branchHeadSha(env: Env, branch: string): Promise<string | null> {
   return sha;
 }
 
-async function ensureStateBranch(env: Env): Promise<string> {
-  const branch = stateBranch(env);
-  const base = baseBranch(env);
+async function ensureStateBranch(env: Env, route: GitRoute): Promise<string> {
+  const branch = route.stateBranch;
+  const base = route.baseBranch;
   if (branch === base) {
     return branch;
   }
@@ -118,9 +168,9 @@ async function ensureStateBranch(env: Env): Promise<string> {
   throw new Error(`github_ref_create_failed branch=${branch} status=${createResponse.status} body=${body}`);
 }
 
-async function ensureOpenPullRequest(env: Env): Promise<void> {
-  const headBranch = stateBranch(env);
-  const base = baseBranch(env);
+async function ensureOpenPullRequest(env: Env, route: GitRoute): Promise<void> {
+  const headBranch = route.stateBranch;
+  const base = route.baseBranch;
   if (headBranch === base) {
     return;
   }
@@ -168,7 +218,8 @@ async function ensureOpenPullRequest(env: Env): Promise<void> {
 }
 
 export async function readPosts(env: Env): Promise<ReadPostsResult> {
-  const branch = await ensureStateBranch(env);
+  const route = await resolveGitRoute(env);
+  const branch = await ensureStateBranch(env, route);
   const response = await fetch(githubContentsUrl(env, POSTS_PATH, branch), {
     method: "GET",
     headers: ghHeaders(env),
@@ -188,7 +239,8 @@ export async function readPosts(env: Env): Promise<ReadPostsResult> {
 }
 
 async function writePosts(env: Env, posts: JsonArray, sha: string, message: string): Promise<WritePostsResult> {
-  const branch = await ensureStateBranch(env);
+  const route = await resolveGitRoute(env);
+  const branch = await ensureStateBranch(env, route);
   const content = encodeBase64Utf8(`${JSON.stringify(posts, null, 2)}\n`);
   const response = await fetch(githubContentsUrl(env, POSTS_PATH, branch), {
     method: "PUT",
@@ -203,14 +255,14 @@ async function writePosts(env: Env, posts: JsonArray, sha: string, message: stri
 
   if (response.ok) {
     try {
-      await ensureOpenPullRequest(env);
+      await ensureOpenPullRequest(env, route);
     } catch (err) {
       // PR creation is best-effort; state write already succeeded.
       const reason = err instanceof Error ? err.message : String(err);
       await logEvent(
         env,
-        `ensure_open_pr_failed branch=${stateBranch(env)} base=${baseBranch(env)} ` +
-          `reason=${reason} manual_pr=${manualPullRequestUrl(env)}`,
+        `ensure_open_pr_failed branch=${route.stateBranch} base=${route.baseBranch} ` +
+          `reason=${reason} manual_pr=${manualPullRequestUrl(env, route)}`,
       );
       console.error("ensure_open_pr_failed", err);
     }

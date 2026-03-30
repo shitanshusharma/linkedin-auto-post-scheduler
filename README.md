@@ -15,7 +15,7 @@ Automates a review-first LinkedIn posting workflow:
 
 1. `scripts/generate.py` picks an unused topic, generates draft copy with GitHub Models, writes to `posts.json`, and sends a Telegram message with inline actions.
 2. Telegram callback requests hit the Cloudflare Worker (`worker/src/index.ts`) at `/webhook`.
-3. The Worker validates the caller and webhook secret, updates `posts.json` on the automation branch via the GitHub Contents API, and opens/reuses a PR to `main`.
+3. The Worker validates the caller and webhook secret, updates `posts.json` via the GitHub Contents API using `config.json` routing (`git_write_target`), and opens/reuses a PR when writing to the automation branch.
 4. `scripts/housekeeping.py` runs periodically for reminders and expiry handling.
 
 Detailed behavior and data contracts are documented in `docs/ARCHITECTURE.md`.
@@ -27,7 +27,7 @@ Detailed behavior and data contracts are documented in `docs/ARCHITECTURE.md`.
 - `.github/workflows/` scheduled generation, housekeeping, and CI quality gate
 - `topics.json` source topics
 - `posts.json` post state machine records
-- `config.json` token lifecycle reminder timestamps
+- `config.json` token lifecycle reminder timestamps + git routing mode
 
 ## Prerequisites
 
@@ -131,6 +131,26 @@ Required by webhook publish flow:
 - `TELEGRAM_USER_ID`
 - `LINKEDIN_ACCESS_TOKEN`
 - `LINKEDIN_PERSON_ID`
+
+### Config-driven git routing (`config.json`)
+
+`config.json` controls where state writes go (for both GitHub Actions and Worker):
+
+- `git_write_target: "bot"` (default): write to `bot/automation-state` and create/reuse PR to `main`
+- `git_write_target: "main"`: write directly to `main` (no PR creation path)
+- `git_base_branch`: base branch for direct-write mode and PR target (default `main`)
+- `git_automation_branch`: automation state branch for bot mode (default `bot/automation-state`)
+
+Additional runtime knobs in `config.json`:
+
+- `generation_enabled`: enable/disable scheduled/manual generation
+- `housekeeping_enabled`: enable/disable housekeeping reminders/expiry cycle
+- `single_active_post`: when `true`, block generation while an active post exists
+- `default_github_model`: fallback model for LLM generation when `GITHUB_MODEL` env is unset
+- `housekeeping_reminder_1_hours`, `housekeeping_reminder_2_hours`, `housekeeping_expiry_hours`
+- `linkedin_warning_days`, `linkedin_urgent_days`, `pat_warning_days`
+
+`config.json` is strict JSON (no native comments), so inline guidance is stored using `__comment_*` keys.
 
 ## Troubleshooting
 
