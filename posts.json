@@ -1,1 +1,24 @@
-[{}]
+[
+  {},
+  {
+    "id": "post_2026_03_30_001",
+    "topic": "How Netflix Generates Personalized Thumbnails Using Contextual Bandits",
+    "status": "pending",
+    "approval_token": "696fa8610c4d2615",
+    "telegram_message_id": 20,
+    "content": {
+      "hook": "Ever wondered how Netflix grabs your attention with the perfect thumbnail?",
+      "body": "Netflix uses contextual bandits to show personalized thumbnails that resonate with each viewer.\n\nBy analyzing user context like watch history and time of day, the system dynamically selects which thumbnail to display.\n\nExample: A user who loves action movies sees an intense fight scene, while a romantic movie buff sees a couple in a heartfelt moment.\n\n[User context] -> [Pick thumbnail] -> [Measure engagement]\n\nThis approach ensures that the right image reaches the right user, keeping them engaged and excited about what to watch next.",
+      "cta": "Have you ever noticed how your Netflix thumbnails seem tailored just for you? Share your thoughts below!"
+    },
+    "composed_text": "Ever wondered how Netflix grabs your attention with the perfect thumbnail?\n\nNetflix uses contextual bandits to show personalized thumbnails that resonate with each viewer.\n\nBy analyzing user context like watch history and time of day, the system dynamically selects which thumbnail to display.\n\nExample: A user who loves action movies sees an intense fight scene, while a romantic movie buff sees a couple in a heartfelt moment.\n\n[User context] -> [Pick thumbnail] -> [Measure engagement]\n\nThis approach ensures that the right image reaches the right user, keeping them engaged and excited about what to watch next.\n\nHave you ever noticed how your Netflix thumbnails seem tailored just for you? Share your thoughts below!",
+    "risk_flags": [],
+    "proposed_edit": null,
+    "publish_attempted_at": null,
+    "created_at": "2026-03-30T12:05:09Z",
+    "approved_at": null,
+    "posted_at": null,
+    "linkedin_post_id": null,
+    "error": null
+  }
+]
