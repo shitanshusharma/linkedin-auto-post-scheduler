@@ -118,10 +118,26 @@ def generate_post_json(*, token: str, topic_title: str, strict_retry: bool = Fal
     user = LLM_PROMPTS.USER_PROMPT_TEMPLATE.format(topic_title=topic_title)
     if strict_retry:
         user += LLM_RUNTIME.STRICT_RETRY_SUFFIX
+    return _generate_post_json_with_user_prompt(token=token, user_content=user, strict_retry=strict_retry)
+
+
+def _generate_post_json_with_user_prompt(*, token: str, user_content: str, strict_retry: bool) -> dict[str, Any]:
     raw = chat_completion(
         token=token,
-        user_content=user,
+        user_content=user_content,
         temperature=LLM_RUNTIME.STRICT_RETRY_TEMPERATURE if strict_retry else LLM_RUNTIME.DEFAULT_TEMPERATURE,
     )
     return extract_json_object(raw)
+
+
+def generate_post_json_with_feedback(
+    *, token: str, topic_title: str, feedback: str | None, strict_retry: bool = True
+) -> dict[str, Any]:
+    """Call model with optional validator feedback to improve compliance."""
+    user = LLM_PROMPTS.USER_PROMPT_TEMPLATE.format(topic_title=topic_title)
+    if strict_retry:
+        user += LLM_RUNTIME.STRICT_RETRY_SUFFIX
+    if feedback:
+        user += f"{LLM_RUNTIME.VALIDATION_FEEDBACK_PREFIX}- {feedback}\n"
+    return _generate_post_json_with_user_prompt(token=token, user_content=user, strict_retry=strict_retry)
 

@@ -2,7 +2,7 @@
 name: linkedin-posts
 description: When the user wants to create LinkedIn post copy or optimize for LinkedIn. Also use when the user mentions "LinkedIn post," "LinkedIn article," "professional post," "post to LinkedIn," "LinkedIn content," "LinkedIn copy," "B2B LinkedIn," "LinkedIn engagement," or "LinkedIn marketing." For LinkedIn ads, use linkedin-ads.
 metadata:
-  version: 1.1.2
+  version: 1.1.3
 ---
 
 # Platforms: LinkedIn
@@ -56,41 +56,20 @@ This skill enables agents to generate LinkedIn post copy optimized for engagemen
 - **Post frequency**: Weekly minimum for companies
 - **Alt text**: Add for accessibility
 - **Examples**: Use **exactly one** concrete example per post (do not include multiple examples)
+- **Body formatting**: Use short paragraphs/line breaks; avoid one large text block
 
 ## Algorithm Topics (Do Not Assume)
 
-Use this section only when the post topic includes an algorithm/process.
+Use this section only when the topic includes an algorithm/process.
 
-- If the algorithm is clearly known from the provided context, include:
-  - one short algorithm explanation,
-  - exactly one example,
-  - one ASCII diagram.
-- If the algorithm is unclear, incomplete, or ambiguous:
+- If algorithm details are clearly known:
+  - include one short algorithm explanation,
+  - include exactly one `Example:` line,
+  - include one compact ASCII diagram (max 3 short lines).
+- If algorithm details are unclear:
   - do **not** invent steps,
-  - do **not** include a guessed algorithm diagram,
-  - ask for clarification or skip algorithm-specific content.
-
-ASCII decision flow:
-
-```text
-[Post topic]
-     |
-     v
-[Algorithm clearly known?] -- No --> [Skip algorithm details / ask clarification]
-     |
-    Yes
-     v
-[Write short algorithm summary]
-     |
-     v
-[Add exactly ONE example]
-     |
-     v
-[Add ASCII diagram]
-     |
-     v
-[Finalize post]
-```
+  - do **not** include a guessed diagram,
+  - ask for clarification or skip algorithm-specific details.
 
 ## Output Format
 
@@ -100,7 +79,7 @@ When generating LinkedIn copy, provide:
 2. **Full post** with character count
 3. **Hashtags** (3→; end of post)
 4. **Image specs** (if design agent needs dimensions)
-5. **If algorithm is clearly known**: include one ASCII diagram and only one example in the post
+5. **If algorithm is clearly known**: include one compact ASCII diagram and only one `Example:` line in the post
 
 ## Related Skills
 

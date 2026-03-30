@@ -29,7 +29,7 @@ from common.logger import get_logger
 from common.paths import repo_root
 from common.repo_json import read_json, write_json
 from core.constants import ACTIVE_POST_STATUSES, ERROR_MESSAGES, FEATURE_FLAGS, GIT_ROUTING
-from core.llm import ensure_linkedin_skill_ready, generate_post_json
+from core.llm import ensure_linkedin_skill_ready, generate_post_json, generate_post_json_with_feedback
 from core.llm_output import LlmPostOutput, to_llm_post_output, validate_llm_output
 from core.post_record import build_post, compose_text, new_approval_token, next_post_id
 from integrations.git_push import commit_and_push, should_auto_push
@@ -83,13 +83,24 @@ def _run_llm(topic_title: str) -> LlmPostOutput | None:
         return None
 
     notes: list[str] = []
-    for attempt, strict in enumerate((False, True), start=1):
+    feedback: str | None = None
+    for attempt in range(1, 4):
+        strict = attempt > 1
         try:
-            data = generate_post_json(token=token, topic_title=topic_title, strict_retry=strict)
+            if feedback and strict:
+                data = generate_post_json_with_feedback(
+                    token=token,
+                    topic_title=topic_title,
+                    feedback=feedback,
+                    strict_retry=True,
+                )
+            else:
+                data = generate_post_json(token=token, topic_title=topic_title, strict_retry=strict)
             ok, err = validate_llm_output(data)
             if ok:
                 return to_llm_post_output(data)
             notes.append(f"attempt{attempt} validation: {err}")
+            feedback = err
         except Exception as exc:  # noqa: BLE001
             notes.append(f"attempt{attempt} parse: {type(exc).__name__}: {exc}")
     detail = " | ".join(notes)
