@@ -8,9 +8,9 @@ from typing import Any
 
 import requests
 
-from lib.constants import LLM_PROMPTS, LLM_RUNTIME, URLS
-from lib.llm_output import extract_json_object
-from lib.paths import repo_root
+from common.paths import repo_root
+from core.constants import LLM_PROMPTS, LLM_RUNTIME, URLS
+from core.llm_output import extract_json_object
 
 REQUIRED_SKILL_NAME = LLM_RUNTIME.REQUIRED_SKILL_NAME
 REQUIRED_SKILL_PATH = repo_root() / LLM_RUNTIME.SKILLS_DIR / REQUIRED_SKILL_NAME / "SKILL.md"
@@ -124,3 +124,4 @@ def generate_post_json(*, token: str, topic_title: str, strict_retry: bool = Fal
         temperature=LLM_RUNTIME.STRICT_RETRY_TEMPERATURE if strict_retry else LLM_RUNTIME.DEFAULT_TEMPERATURE,
     )
     return extract_json_object(raw)
+

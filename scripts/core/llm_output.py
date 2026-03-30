@@ -6,7 +6,7 @@ import json
 import re
 from typing import Any, TypedDict
 
-from lib.constants import LLM_OUTPUT
+from core.constants import LLM_OUTPUT
 
 
 class LlmPostOutput(TypedDict):
@@ -78,3 +78,4 @@ def validate_llm_output(data: dict[str, Any]) -> tuple[bool, str]:
             return False, "raw HTML tags not allowed"
 
     return True, ""
+

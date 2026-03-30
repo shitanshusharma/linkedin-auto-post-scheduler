@@ -6,7 +6,7 @@ import secrets
 from datetime import datetime, timezone
 from typing import Any
 
-from .constants import ACTIVE_POST_STATUSES, POST_RECORD
+from core.constants import ACTIVE_POST_STATUSES, POST_RECORD
 
 
 def next_post_id(existing_posts: list[dict[str, Any]]) -> str:
@@ -64,3 +64,4 @@ def build_post(
         "linkedin_post_id": None,
         "error": None,
     }
+

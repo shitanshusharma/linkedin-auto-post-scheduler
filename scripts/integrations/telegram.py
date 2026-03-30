@@ -3,7 +3,7 @@ from typing import Any, Optional
 
 import requests
 
-from .constants import MAX_CALLBACK_DATA_BYTES, URLS
+from core.constants import MAX_CALLBACK_DATA_BYTES, URLS
 
 
 def send_message(
@@ -27,7 +27,8 @@ def send_message(
 
 
 def inline_approve_edit_reject(post_id: str, approval_token: str) -> dict[str, Any]:
-    """Inline keyboard: a:/e:/r: + post_id + token (callback_data ≤ 64 bytes)."""
+    """Inline keyboard: a:/e:/r: + post_id + token (callback_data <= 64 bytes)."""
+
     def cb(prefix: str) -> str:
         s = f"{prefix}:{post_id}:{approval_token}"
         n = len(s.encode("utf-8"))
@@ -59,3 +60,4 @@ def log_bot_send(text: str) -> None:
         send_message(token, chat, text)
     except Exception as exc:  # noqa: BLE001 — intentional for audit channel
         print(f"[log_bot] failed: {exc}", flush=True)
+

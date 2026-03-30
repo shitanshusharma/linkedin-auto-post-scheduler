@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-from .constants import HALF_DAY_WINDOW
+from core.constants import HALF_DAY_WINDOW
 
 
 def parse_iso8601(value: Any) -> datetime | None:

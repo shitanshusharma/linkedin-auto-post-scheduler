@@ -25,15 +25,15 @@ _SCRIPT_DIR = Path(__file__).resolve().parent
 if str(_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR))
 
-from lib.constants import ACTIVE_POST_STATUSES, ERROR_MESSAGES
-from lib.git_push import commit_and_push, should_auto_push
-from lib.llm import ensure_linkedin_skill_ready, generate_post_json
-from lib.llm_output import LlmPostOutput, to_llm_post_output, validate_llm_output
-from lib.logger import get_logger
-from lib.paths import repo_root
-from lib.post_record import build_post, compose_text, new_approval_token, next_post_id
-from lib.repo_json import read_json, write_json
-from lib.telegram import inline_approve_edit_reject, send_message
+from common.logger import get_logger
+from common.paths import repo_root
+from common.repo_json import read_json, write_json
+from core.constants import ACTIVE_POST_STATUSES, ERROR_MESSAGES
+from core.llm import ensure_linkedin_skill_ready, generate_post_json
+from core.llm_output import LlmPostOutput, to_llm_post_output, validate_llm_output
+from core.post_record import build_post, compose_text, new_approval_token, next_post_id
+from integrations.git_push import commit_and_push, should_auto_push
+from integrations.telegram import inline_approve_edit_reject, send_message
 
 LOGGER = get_logger("generate")
 

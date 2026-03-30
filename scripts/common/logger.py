@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 from dataclasses import dataclass
 
-from .telegram import log_bot_send
+from integrations.telegram import log_bot_send
 
 
 @dataclass(frozen=True)

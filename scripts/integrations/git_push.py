@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 from urllib import error, parse, request
 
-from .constants import GIT_AUTOMATION
+from core.constants import GIT_AUTOMATION
 
 
 def _github_token() -> str:
@@ -157,3 +157,4 @@ def commit_and_push(repo_root: Path, paths: list[str], message: str) -> bool:
 
 def should_auto_push() -> bool:
     return os.environ.get("GITHUB_ACTIONS") == "true" or os.environ.get("GIT_PUSH") == "1"
+

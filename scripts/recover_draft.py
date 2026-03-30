@@ -23,11 +23,11 @@ _SCRIPT_DIR = Path(__file__).resolve().parent
 if str(_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR))
 
-from lib.git_push import commit_and_push, should_auto_push
-from lib.constants import ACTIVE_POST_STATUSES
-from lib.paths import repo_root
-from lib.post_record import build_post
-from lib.repo_json import read_json, write_json
+from common.paths import repo_root
+from common.repo_json import read_json, write_json
+from core.constants import ACTIVE_POST_STATUSES
+from core.post_record import build_post
+from integrations.git_push import commit_and_push, should_auto_push
 
 
 def _normalize_post(p: dict) -> dict:
