@@ -9,6 +9,8 @@ export interface KVNamespaceLike {
 export interface Env {
   GH_FINE_GRAINED_PAT: string;
   GH_REPO: string;
+  GH_STATE_BRANCH?: string;
+  GH_BASE_BRANCH?: string;
   TELEGRAM_POST_BOT_TOKEN: string;
   TELEGRAM_LOG_BOT_TOKEN?: string;
   TELEGRAM_LOG_CHAT_ID?: string;

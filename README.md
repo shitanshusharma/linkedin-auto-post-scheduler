@@ -15,7 +15,7 @@ Automates a review-first LinkedIn posting workflow:
 
 1. `scripts/generate.py` picks an unused topic, generates draft copy with GitHub Models, writes to `posts.json`, and sends a Telegram message with inline actions.
 2. Telegram callback requests hit the Cloudflare Worker (`worker/src/index.ts`) at `/webhook`.
-3. The Worker validates the caller and webhook secret, updates `posts.json` through the GitHub Contents API, and publishes approved copy to LinkedIn.
+3. The Worker validates the caller and webhook secret, updates `posts.json` on the automation branch via the GitHub Contents API, and opens/reuses a PR to `main`.
 4. `scripts/housekeeping.py` runs periodically for reminders and expiry handling.
 
 Detailed behavior and data contracts are documented in `docs/ARCHITECTURE.md`.
@@ -71,6 +71,8 @@ Detailed behavior and data contracts are documented in `docs/ARCHITECTURE.md`.
 2. Set Worker runtime secrets (one-time per environment), for example:
    - `wrangler secret put GH_FINE_GRAINED_PAT`
    - `wrangler secret put GH_REPO`
+   - `wrangler secret put GH_STATE_BRANCH` (optional, default `bot/automation-state`)
+   - `wrangler secret put GH_BASE_BRANCH` (optional, default `main`)
    - `wrangler secret put TELEGRAM_POST_BOT_TOKEN`
    - `wrangler secret put TELEGRAM_LOG_BOT_TOKEN`
    - `wrangler secret put TELEGRAM_LOG_CHAT_ID`
@@ -119,6 +121,8 @@ Note: `GITHUB_TOKEN` is automatically provided by GitHub Actions.
 Required by webhook publish flow:
 - `GH_FINE_GRAINED_PAT`
 - `GH_REPO`
+- `GH_STATE_BRANCH` (optional, default `bot/automation-state`)
+- `GH_BASE_BRANCH` (optional, default `main`)
 - `TELEGRAM_POST_BOT_TOKEN`
 - `TELEGRAM_LOG_BOT_TOKEN` (optional)
 - `TELEGRAM_LOG_CHAT_ID` (optional)
@@ -136,6 +140,8 @@ Required by webhook publish flow:
   - check and update `LINKEDIN_VERSION` in `worker/src/constants.ts`
 - Telegram callbacks ignored:
   - verify `TELEGRAM_USER_ID` and `TELEGRAM_CHAT_ID` match your account/chat
+- Worker cannot create/update PR:
+  - ensure `GH_FINE_GRAINED_PAT` has repository `Contents (Read and write)` and `Pull requests (Read and write)`
 - CI quality gate fails:
   - run `python scripts/quality_gate.py` locally and fix reported checks
 

@@ -20,6 +20,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
   models: read
 
 concurrency:
@@ -60,6 +61,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      AUTOMATION_BRANCH: bot/automation-state
+      AUTOMATION_BASE_BRANCH: main
       WF_ACTION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.action || 'generate' }}
       WF_POST_ID: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.post_id || '' }}
       # Secret-dependent values are empty in forks unless users configure them.
@@ -69,6 +72,16 @@ jobs:
       TELEGRAM_LOG_CHAT_ID: ${{ secrets.TELEGRAM_LOG_CHAT_ID }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare automation branch checkout
+        shell: bash
+        run: |
+          git fetch origin "${AUTOMATION_BRANCH}:${AUTOMATION_BRANCH}" || true
+          if git show-ref --verify --quiet "refs/heads/${AUTOMATION_BRANCH}"; then
+            git checkout "${AUTOMATION_BRANCH}"
+          fi
 
       - uses: actions/setup-python@v5
         with:
