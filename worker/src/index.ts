@@ -16,7 +16,7 @@ import {
   POST_STATUSES,
   RATE_LIMIT_MAX_REQUESTS_PER_MINUTE,
   RESPONSE_MESSAGES,
-} from "./constants";
+} from "../common/constants";
 import {
   handleApprove,
   handleConfirmEdit,
@@ -27,16 +27,16 @@ import {
   resendApprovalMessage,
   setPostMessageId,
 } from "./decision_handlers";
-import { findPostIndex, mutatePostsWithRetry, readPosts } from "./github_posts";
-import { logEvent } from "./logger";
+import { findPostIndex, mutatePostsWithRetry, readPosts } from "../common/github_posts";
+import { logEvent } from "../common/logger";
 import {
   answerCallbackQuery,
   inlineConfirmReenter,
   parseCallbackAction,
   sendPostBotMessage,
-} from "./telegram_client";
-import { Env, JsonObject, TelegramCallbackQuery, TelegramMessage, TelegramUpdate } from "./types";
-import { asNumber, asString } from "./utils";
+} from "../common/telegram_client";
+import { Env, JsonObject, TelegramCallbackQuery, TelegramMessage, TelegramUpdate } from "../common/types";
+import { asNumber, asString } from "../common/utils";
 
 function statusOf(post: JsonObject): string {
   return asString(post.status) ?? "";

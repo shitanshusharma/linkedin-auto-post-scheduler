@@ -137,7 +137,7 @@ Required by webhook publish flow:
 - `401 Unauthorized` on Worker webhook:
   - verify `x-telegram-bot-api-secret-token` matches `TELEGRAM_WEBHOOK_SECRET`
 - LinkedIn publish errors similar to `NONEXISTENT_VERSION`:
-  - check and update `LINKEDIN_VERSION` in `worker/src/constants.ts`
+  - check and update `LINKEDIN_VERSION` in `worker/common/constants.ts`
 - Telegram callbacks ignored:
   - verify `TELEGRAM_USER_ID` and `TELEGRAM_CHAT_ID` match your account/chat
 - Worker cannot create/update PR:

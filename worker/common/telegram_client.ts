@@ -1,6 +1,6 @@
 import { API_URLS, CALLBACK_DATA_MAX_BYTES } from "./constants";
-import { asNumber } from "./utils";
 import { CallbackAction, Env, JsonObject } from "./types";
+import { asNumber } from "./utils";
 
 function callbackData(prefix: string, postId: string, approvalToken: string): string {
   const data = `${prefix}:${postId}:${approvalToken}`;

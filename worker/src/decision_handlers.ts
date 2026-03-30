@@ -1,16 +1,16 @@
-import { MAX_TELEGRAM_POST_LENGTH, POST_STATUSES, RESPONSE_MESSAGES } from "./constants";
-import { findPostIndex, mutatePostsWithRetry, readPosts } from "./github_posts";
-import { publishToLinkedIn } from "./linkedin_client";
-import { logEvent } from "./logger";
+import { MAX_TELEGRAM_POST_LENGTH, POST_STATUSES, RESPONSE_MESSAGES } from "../common/constants";
+import { findPostIndex, mutatePostsWithRetry, readPosts } from "../common/github_posts";
+import { publishToLinkedIn } from "../common/linkedin_client";
+import { logEvent } from "../common/logger";
 import {
   answerCallbackQuery,
   clearInlineKeyboard,
   inlineApproveEditReject,
   inlineRetry,
   sendPostBotMessage,
-} from "./telegram_client";
-import { CallbackAction, Env, JsonObject } from "./types";
-import { asString, nowIso } from "./utils";
+} from "../common/telegram_client";
+import { CallbackAction, Env, JsonObject } from "../common/types";
+import { asString, nowIso } from "../common/utils";
 
 function tokenOf(post: JsonObject): string {
   return asString(post.approval_token) ?? "";

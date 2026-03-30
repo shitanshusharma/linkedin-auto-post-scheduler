@@ -7,8 +7,8 @@ import {
   WORKER_SYNC_PR_BODY,
   WORKER_SYNC_PR_TITLE,
 } from "./constants";
-import { asString, decodeBase64Utf8, encodeBase64Utf8 } from "./utils";
 import { Env, GithubContentsResponse, JsonArray, JsonObject, ReadPostsResult, WritePostsResult } from "./types";
+import { asString, decodeBase64Utf8, encodeBase64Utf8 } from "./utils";
 
 function ghHeaders(env: Env): HeadersInit {
   return {
