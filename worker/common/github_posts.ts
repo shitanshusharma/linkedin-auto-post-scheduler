@@ -7,6 +7,7 @@ import {
   WORKER_SYNC_PR_BODY,
   WORKER_SYNC_PR_TITLE,
 } from "./constants";
+import { logEvent } from "./logger";
 import { Env, GithubContentsResponse, JsonArray, JsonObject, ReadPostsResult, WritePostsResult } from "./types";
 import { asString, decodeBase64Utf8, encodeBase64Utf8 } from "./utils";
 
@@ -43,6 +44,13 @@ function githubRepoApiBase(env: Env): string {
 function githubContentsUrl(env: Env, path: string, ref: string): string {
   const query = new URLSearchParams({ ref }).toString();
   return `${githubRepoApiBase(env)}/contents/${path}?${query}`;
+}
+
+function manualPullRequestUrl(env: Env): string {
+  const branch = stateBranch(env);
+  const base = baseBranch(env);
+  const query = new URLSearchParams({ base }).toString();
+  return `https://github.com/${env.GH_REPO}/pull/new/${branch}?${query}`;
 }
 
 function asObject(value: unknown): JsonObject | null {
@@ -198,6 +206,12 @@ async function writePosts(env: Env, posts: JsonArray, sha: string, message: stri
       await ensureOpenPullRequest(env);
     } catch (err) {
       // PR creation is best-effort; state write already succeeded.
+      const reason = err instanceof Error ? err.message : String(err);
+      await logEvent(
+        env,
+        `ensure_open_pr_failed branch=${stateBranch(env)} base=${baseBranch(env)} ` +
+          `reason=${reason} manual_pr=${manualPullRequestUrl(env)}`,
+      );
       console.error("ensure_open_pr_failed", err);
     }
     return { ok: true, conflict: false };
