@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
+import time
 from typing import Any
 
 import requests
@@ -11,6 +13,8 @@ import requests
 from common.paths import repo_root
 from core.constants import LLM_PROMPTS, LLM_RUNTIME, URLS
 from core.llm_output import extract_json_object
+
+_logger = logging.getLogger(__name__)
 
 REQUIRED_SKILL_NAME = LLM_RUNTIME.REQUIRED_SKILL_NAME
 REQUIRED_SKILL_PATH = repo_root() / LLM_RUNTIME.SKILLS_DIR / REQUIRED_SKILL_NAME / "SKILL.md"
@@ -90,9 +94,13 @@ def chat_completion(
     model: str | None = None,
     temperature: float = LLM_RUNTIME.DEFAULT_TEMPERATURE,
 ) -> str:
-    """Return assistant message content string (may be JSON)."""
+    """Return assistant message content string (may be JSON).
+
+    Retries automatically on 429 (rate-limit) with exponential backoff,
+    respecting the ``Retry-After`` header when present.
+    """
     m = model or os.environ.get("GITHUB_MODEL", LLM_RUNTIME.DEFAULT_GITHUB_MODEL)
-    body: dict[str, Any] = {
+    payload: dict[str, Any] = {
         "model": m,
         "temperature": temperature,
         "messages": [
@@ -100,8 +108,39 @@ def chat_completion(
             {"role": "user", "content": user_content},
         ],
     }
-    r = requests.post(URLS.GITHUB_MODELS_CHAT_COMPLETIONS, headers=_headers(token), json=body, timeout=120)
-    r.raise_for_status()
+
+    last_exc: requests.HTTPError | None = None
+    for attempt in range(LLM_RUNTIME.RATE_LIMIT_MAX_RETRIES + 1):
+        r = requests.post(
+            URLS.GITHUB_MODELS_CHAT_COMPLETIONS,
+            headers=_headers(token),
+            json=payload,
+            timeout=120,
+        )
+        if r.status_code != 429:
+            r.raise_for_status()
+            break
+
+        last_exc = requests.HTTPError(response=r)
+        if attempt >= LLM_RUNTIME.RATE_LIMIT_MAX_RETRIES:
+            break
+
+        retry_after = r.headers.get("Retry-After")
+        if retry_after:
+            try:
+                wait = max(float(retry_after), 1.0)
+            except (ValueError, TypeError):
+                wait = LLM_RUNTIME.RATE_LIMIT_BACKOFF_SECONDS[attempt]
+        else:
+            wait = LLM_RUNTIME.RATE_LIMIT_BACKOFF_SECONDS[attempt]
+
+        _logger.warning("Rate-limited (429); retrying in %.0fs (attempt %d/%d)", wait, attempt + 1, LLM_RUNTIME.RATE_LIMIT_MAX_RETRIES)
+        time.sleep(wait)
+    else:
+        if last_exc is not None:
+            raise last_exc
+        r.raise_for_status()
+
     data = r.json()
     choices = data.get("choices") or []
     if not choices:

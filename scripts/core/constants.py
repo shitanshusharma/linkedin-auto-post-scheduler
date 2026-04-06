@@ -13,6 +13,8 @@ class LLM_RUNTIME:
         "No markdown code fences. Exactly four keys: hook, body, cta, risk_flags."
     )
     VALIDATION_FEEDBACK_PREFIX = "\n\nFix these validation issues from your previous draft:\n"
+    RATE_LIMIT_MAX_RETRIES = 3
+    RATE_LIMIT_BACKOFF_SECONDS = (10, 30, 60)
 
 
 class LLM_PROMPTS:

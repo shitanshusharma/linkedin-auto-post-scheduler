@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import os
 import sys
+import time
 import traceback
 from pathlib import Path
 
@@ -85,6 +86,8 @@ def _run_llm(topic_title: str) -> LlmPostOutput | None:
     notes: list[str] = []
     feedback: str | None = None
     for attempt in range(1, 4):
+        if attempt > 1:
+            time.sleep(5)
         strict = attempt > 1
         try:
             if feedback and strict:
