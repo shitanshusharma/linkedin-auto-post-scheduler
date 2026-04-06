@@ -19,5 +19,26 @@
     "posted_at": "2026-03-30T12:06:19.555Z",
     "linkedin_post_id": null,
     "error": null
+  },
+  {
+    "id": "post_2026_04_06_001",
+    "topic": "How Uber's Surge Pricing Algorithm Balances Supply and Demand in Real Time",
+    "status": "posted",
+    "approval_token": null,
+    "telegram_message_id": null,
+    "content": {
+      "hook": "Uber's surge pricing isn't random \u2014 it's a real-time control loop that responds to supply-demand imbalance within minutes.",
+      "body": "The system continuously monitors two signals: rider requests per zone and available driver supply. When the demand-to-supply ratio crosses a threshold, the pricing multiplier activates.\n\nThe algorithm divides cities into hexagonal geospatial cells. Each cell tracks request rate and driver availability independently, enabling granular pricing decisions.\n\nWhen requests in a cell spike and nearby driver utilization exceeds roughly 80%, the surge multiplier triggers. Higher prices reduce demand while incentivizing drivers to reposition toward high-demand zones.\n\nExample: A concert ends at 11 PM \u2014 ride requests in that cell jump 4x while driver supply stays flat, triggering a 2.5x surge that draws drivers from adjacent low-demand cells.\n\n[Demand spike] -> [Surge multiplier] -> [Driver rebalance]\n\nThe feedback loop is self-correcting: as drivers flow in and riders defer trips, supply and demand converge, and the multiplier decays back to 1.0x.",
+      "cta": "Next time you see surge pricing, look at it as a distributed optimization system rebalancing a city-scale marketplace in real time."
+    },
+    "composed_text": "Uber's surge pricing isn't random \u2014 it's a real-time control loop that responds to supply-demand imbalance within minutes.\n\nThe system continuously monitors two signals: rider requests per zone and available driver supply. When the demand-to-supply ratio crosses a threshold, the pricing multiplier activates.\n\nThe algorithm divides cities into hexagonal geospatial cells. Each cell tracks request rate and driver availability independently, enabling granular pricing decisions.\n\nWhen requests in a cell spike and nearby driver utilization exceeds roughly 80%, the surge multiplier triggers. Higher prices reduce demand while incentivizing drivers to reposition toward high-demand zones.\n\nExample: A concert ends at 11 PM \u2014 ride requests in that cell jump 4x while driver supply stays flat, triggering a 2.5x surge that draws drivers from adjacent low-demand cells.\n\n[Demand spike] -> [Surge multiplier] -> [Driver rebalance]\n\nThe feedback loop is self-correcting: as drivers flow in and riders defer trips, supply and demand converge, and the multiplier decays back to 1.0x.\n\nNext time you see surge pricing, look at it as a distributed optimization system rebalancing a city-scale marketplace in real time.",
+    "risk_flags": [],
+    "proposed_edit": null,
+    "publish_attempted_at": null,
+    "created_at": "2026-04-06T00:00:00Z",
+    "approved_at": null,
+    "posted_at": null,
+    "linkedin_post_id": null,
+    "error": null
   }
 ]
