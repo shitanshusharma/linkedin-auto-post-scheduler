@@ -4,18 +4,11 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any, TypedDict
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 from core.constants import LLM_OUTPUT
-
-
-class LlmPostOutput(TypedDict):
-    """Structured LLM output after validation (§3.3.1)."""
-
-    hook: str
-    body: str
-    cta: str
-    risk_flags: list[str]
 
 
 def _dedupe_flags(flags: list[str]) -> list[str]:
@@ -80,7 +73,6 @@ def _numeric_consistency_warning_flags_from_example(body: str) -> list[str]:
                 warnings.append(warning)
 
     if multipliers and percent_increases:
-        # "50% increase" should be close to 1.5x, etc.
         expected_from_percent = [1.0 + (pct / 100.0) for pct in percent_increases]
         close_match = any(
             abs(multiplier - expected) <= 0.15
@@ -91,18 +83,6 @@ def _numeric_consistency_warning_flags_from_example(body: str) -> list[str]:
             warnings.append("math_check: percentage change and x-multiplier appear inconsistent")
 
     return _dedupe_flags(warnings)
-
-
-def to_llm_post_output(data: dict[str, Any]) -> LlmPostOutput:
-    """Narrow a validated dict to LlmPostOutput. Call only after validate_llm_output passes."""
-    base_flags = [str(x) for x in data["risk_flags"]]
-    math_flags = _numeric_consistency_warning_flags_from_example(str(data["body"]))
-    return {
-        "hook": str(data["hook"]),
-        "body": str(data["body"]),
-        "cta": str(data["cta"]),
-        "risk_flags": _dedupe_flags(base_flags + math_flags),
-    }
 
 
 def extract_json_object(raw: str) -> dict[str, Any]:
@@ -152,13 +132,7 @@ def _ascii_diagram_lines(body: str) -> list[str]:
 
 
 def _has_equation_style_line(body: str) -> bool:
-    # Catch formula-like lines such as "x = a*b + c" while allowing normal prose.
     return bool(re.search(r"(?m)^\s*[A-Za-z_][A-Za-z0-9_]*\s*=", body))
-
-
-def _contains_any_phrase(text: str, phrases: tuple[str, ...]) -> bool:
-    lowered = text.lower()
-    return any(phrase in lowered for phrase in phrases)
 
 
 def _count_distinct_phrases(text: str, phrases: tuple[str, ...]) -> int:
@@ -166,148 +140,136 @@ def _count_distinct_phrases(text: str, phrases: tuple[str, ...]) -> int:
     return sum(1 for phrase in phrases if phrase in lowered)
 
 
-def _has_moderate_technical_depth(body: str) -> bool:
-    # Require multiple concrete technical signals, not just generic prose.
-    core_cues = (
-        "algorithm",
-        "signal",
-        "metric",
-        "trigger",
-        "decision",
-        "condition",
-        "threshold",
-        "latency",
-        "throughput",
-        "capacity",
-        "utilization",
-        "rate",
-        "availability",
-        "allocation",
-        "requests",
-        "drivers",
-        "feedback loop",
-        "control loop",
-        "pipeline",
-        "model",
-        "cache",
-        "queue",
-        "optimization",
-        "constraint",
-        "input",
-        "output",
-        "demand",
-        "supply",
-    )
-    advanced_cues = (
-        "threshold",
-        "latency",
-        "throughput",
-        "feedback loop",
-        "control loop",
-        "optimization",
-        "constraint",
-        "utilization",
-        "capacity",
-        "allocation",
-        "pipeline",
-        "queue",
-        "idempotency",
-        "consistency",
-        "replication",
-        "model",
-    )
-    trigger_cues = (
-        "when",
-        "if",
-        "exceeds",
-        "drops below",
-        "crosses",
-        "trigger",
-        "triggers",
-        "threshold",
-    )
+def _contains_any_phrase(text: str, phrases: tuple[str, ...]) -> bool:
+    lowered = text.lower()
+    return any(phrase in lowered for phrase in phrases)
 
-    core_count = _count_distinct_phrases(body, core_cues)
-    advanced_count = _count_distinct_phrases(body, advanced_cues)
-    has_trigger_logic = _contains_any_phrase(body, trigger_cues)
+
+_TECHNICAL_CORE_CUES = (
+    "algorithm", "signal", "metric", "trigger", "decision", "condition",
+    "threshold", "latency", "throughput", "capacity", "utilization", "rate",
+    "availability", "allocation", "requests", "drivers", "feedback loop",
+    "control loop", "pipeline", "model", "cache", "queue", "optimization",
+    "constraint", "input", "output", "demand", "supply",
+)
+
+_TECHNICAL_ADVANCED_CUES = (
+    "threshold", "latency", "throughput", "feedback loop", "control loop",
+    "optimization", "constraint", "utilization", "capacity", "allocation",
+    "pipeline", "queue", "idempotency", "consistency", "replication", "model",
+)
+
+_TECHNICAL_TRIGGER_CUES = (
+    "when", "if", "exceeds", "drops below", "crosses", "trigger",
+    "triggers", "threshold",
+)
+
+
+def _has_moderate_technical_depth(body: str) -> bool:
+    core_count = _count_distinct_phrases(body, _TECHNICAL_CORE_CUES)
+    advanced_count = _count_distinct_phrases(body, _TECHNICAL_ADVANCED_CUES)
+    has_trigger_logic = _contains_any_phrase(body, _TECHNICAL_TRIGGER_CUES)
     return core_count >= 3 and advanced_count >= 1 and has_trigger_logic
 
 
-def _contains_banned_template_phrase(text: str) -> bool:
-    banned = (
-        "game-changer",
-        "powerful tool",
-        "embrace the power of",
-    )
-    lowered = text.lower()
-    return any(phrase in lowered for phrase in banned)
+_BANNED_PHRASES = (
+    "game-changer",
+    "powerful tool",
+    "embrace the power of",
+)
+
+_GENERIC_CTA_PATTERNS = ("can improve your approach",)
 
 
-def _is_generic_cta(cta: str) -> bool:
-    lowered = cta.strip().lower()
-    if lowered.startswith("understanding "):
-        return True
-    generic_patterns = ("can improve your approach",)
-    return any(pattern in lowered for pattern in generic_patterns)
+class LlmPostOutput(BaseModel):
+    """Validated LLM output per docs/ARCHITECTURE.md §4.1."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    hook: str = Field(max_length=LLM_OUTPUT.MAX_HOOK_CHARS)
+    body: str = Field(max_length=LLM_OUTPUT.MAX_BODY_CHARS)
+    cta: str = Field(max_length=LLM_OUTPUT.MAX_CTA_CHARS)
+    risk_flags: list[str] = Field(default_factory=list)
+
+    @field_validator("hook", "body", "cta")
+    @classmethod
+    def _must_be_non_empty(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("must be non-empty")
+        return v
+
+    @field_validator("hook", "body", "cta")
+    @classmethod
+    def _no_html_tags(cls, v: str) -> str:
+        if _has_html_tags(v):
+            raise ValueError("raw HTML tags not allowed")
+        return v
+
+    @field_validator("hook", "body")
+    @classmethod
+    def _no_banned_phrases(cls, v: str) -> str:
+        if any(phrase in v.lower() for phrase in _BANNED_PHRASES):
+            raise ValueError("copy must avoid cliche/template phrases; use specific wording")
+        return v
+
+    @field_validator("risk_flags")
+    @classmethod
+    def _dedupe_risk_flags(cls, v: list[str]) -> list[str]:
+        return _dedupe_flags(v)
+
+    @model_validator(mode="after")
+    def _validate_content_rules(self) -> LlmPostOutput:
+        if len(self.hook) + len(self.body) + len(self.cta) > LLM_OUTPUT.MAX_TOTAL_CHARS:
+            raise ValueError("combined length > 2000")
+
+        lowered_cta = self.cta.strip().lower()
+        if lowered_cta.startswith("understanding "):
+            raise ValueError("cta must be specific and practical, not a generic template")
+        if any(p in lowered_cta for p in _GENERIC_CTA_PATTERNS):
+            raise ValueError("cta must be specific and practical, not a generic template")
+        if "?" in self.cta:
+            raise ValueError("cta must be a statement and must not be phrased as a question")
+
+        paragraphs = _paragraphs(self.body)
+        if len(self.body.strip()) >= LLM_OUTPUT.LONG_BODY_REQUIRES_BREAK_CHARS and len(paragraphs) < 2:
+            raise ValueError(
+                "body must use short paragraphs/line breaks (single large block is not allowed)"
+            )
+        if any(len(p) > LLM_OUTPUT.MAX_LONG_PARAGRAPH_CHARS for p in paragraphs):
+            raise ValueError("body paragraphs are too long; split into shorter chunks")
+
+        if not _has_moderate_technical_depth(self.body):
+            raise ValueError(
+                "body must include concrete technical detail "
+                "(multiple system cues plus trigger/decision logic)"
+            )
+
+        if _has_equation_style_line(self.body):
+            raise ValueError("body must avoid hypothetical equation-style notation")
+
+        example_count = _example_line_count(self.body)
+        if example_count != 1:
+            raise ValueError(
+                f'body must contain exactly one line prefixed with "{LLM_OUTPUT.EXAMPLE_PREFIX}"'
+            )
+
+        ascii_lines = _ascii_diagram_lines(self.body)
+        if len(ascii_lines) > LLM_OUTPUT.MAX_ASCII_LINES:
+            raise ValueError(
+                f"ASCII illustration must be at most {LLM_OUTPUT.MAX_ASCII_LINES} lines"
+            )
+        if any(len(line) > LLM_OUTPUT.MAX_ASCII_LINE_CHARS for line in ascii_lines):
+            raise ValueError(
+                f"ASCII illustration lines must be <= {LLM_OUTPUT.MAX_ASCII_LINE_CHARS} chars"
+            )
+
+        math_flags = _numeric_consistency_warning_flags_from_example(self.body)
+        if math_flags:
+            self.risk_flags = _dedupe_flags([*self.risk_flags, *math_flags])
+
+        return self
 
 
-def validate_llm_output(data: dict[str, Any]) -> tuple[bool, str]:
-    """Return (ok, error_message)."""
-    if set(data.keys()) != LLM_OUTPUT.REQUIRED_KEYS:
-        return False, f"keys must be exactly {sorted(LLM_OUTPUT.REQUIRED_KEYS)}, got {sorted(data.keys())}"
-
-    hook = data["hook"]
-    body = data["body"]
-    cta = data["cta"]
-    risk_flags = data["risk_flags"]
-
-    if not isinstance(hook, str) or not isinstance(body, str) or not isinstance(cta, str):
-        return False, "hook, body, cta must be strings"
-    if not isinstance(risk_flags, list) or not all(isinstance(x, str) for x in risk_flags):
-        return False, "risk_flags must be an array of strings"
-    if not hook.strip() or not body.strip() or not cta.strip():
-        return False, "hook, body, cta must be non-empty strings"
-    if _contains_banned_template_phrase(hook) or _contains_banned_template_phrase(body):
-        return False, "copy must avoid cliche/template phrases; use specific wording"
-    if _is_generic_cta(cta):
-        return False, "cta must be specific and practical, not a generic template"
-
-    if (
-        len(hook) > LLM_OUTPUT.MAX_HOOK_CHARS
-        or len(body) > LLM_OUTPUT.MAX_BODY_CHARS
-        or len(cta) > LLM_OUTPUT.MAX_CTA_CHARS
-    ):
-        return False, "length limits exceeded"
-    if len(hook) + len(body) + len(cta) > LLM_OUTPUT.MAX_TOTAL_CHARS:
-        return False, "combined length > 2000"
-    for part in (hook, body, cta):
-        if _has_html_tags(part):
-            return False, "raw HTML tags not allowed"
-
-    paragraphs = _paragraphs(body)
-    if len(body.strip()) >= LLM_OUTPUT.LONG_BODY_REQUIRES_BREAK_CHARS and len(paragraphs) < 2:
-        return False, "body must use short paragraphs/line breaks (single large block is not allowed)"
-    if any(len(paragraph) > LLM_OUTPUT.MAX_LONG_PARAGRAPH_CHARS for paragraph in paragraphs):
-        return False, "body paragraphs are too long; split into shorter chunks"
-    if not _has_moderate_technical_depth(body):
-        return (
-            False,
-            "body must include concrete technical detail (multiple system cues plus trigger/decision logic)",
-        )
-    if _has_equation_style_line(body):
-        return False, "body must avoid hypothetical equation-style notation"
-
-    example_count = _example_line_count(body)
-    if example_count != 1:
-        return False, f'body must contain exactly one line prefixed with "{LLM_OUTPUT.EXAMPLE_PREFIX}"'
-
-    ascii_lines = _ascii_diagram_lines(body)
-    if len(ascii_lines) > LLM_OUTPUT.MAX_ASCII_LINES:
-        return False, f"ASCII illustration must be at most {LLM_OUTPUT.MAX_ASCII_LINES} lines"
-    if any(len(line) > LLM_OUTPUT.MAX_ASCII_LINE_CHARS for line in ascii_lines):
-        return False, f"ASCII illustration lines must be <= {LLM_OUTPUT.MAX_ASCII_LINE_CHARS} chars"
-    if "?" in cta:
-        return False, "cta must be a statement and must not be phrased as a question"
-
-    return True, ""
-
+def validation_error_message(exc: ValidationError) -> str:
+    """Extract a human-readable error string from a Pydantic ValidationError."""
+    return "; ".join(e["msg"].removeprefix("Value error, ") for e in exc.errors())

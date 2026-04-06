@@ -29,54 +29,15 @@ from common.time_utils import days_since, hours_since, parse_iso8601, within_hal
 from core.constants import (
     ACTIVE_POST_STATUSES,
     ERROR_MESSAGES,
-    FEATURE_FLAGS,
     HOUSEKEEPING_WINDOWS_HOURS,
     POST_STATUSES,
-    TOKEN_REMINDER_DAYS,
 )
+from core.models import RepoConfig
+from core.post_record import PostRecord
 from integrations.git_push import commit_and_push, should_auto_push
 from integrations.telegram import send_message
 
 LOGGER = get_logger("housekeeping")
-
-
-def _config_bool(config: dict, key: str, default: bool) -> bool:
-    value = config.get(key)
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        lowered = value.strip().lower()
-        if lowered in {"1", "true", "yes", "on"}:
-            return True
-        if lowered in {"0", "false", "no", "off"}:
-            return False
-    return default
-
-
-def _config_float(config: dict, key: str, default: float) -> float:
-    value = config.get(key)
-    if isinstance(value, (int, float)):
-        return float(value)
-    if isinstance(value, str):
-        try:
-            return float(value.strip())
-        except ValueError:
-            return default
-    return default
-
-
-def _config_int(config: dict, key: str, default: int) -> int:
-    value = config.get(key)
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float):
-        return int(value)
-    if isinstance(value, str):
-        try:
-            return int(value.strip())
-        except ValueError:
-            return default
-    return default
 
 
 def _hours_label(hours: float) -> str:
@@ -104,45 +65,30 @@ def main() -> int:
     config_path = root / "config.json"
     posts_path = root / "posts.json"
 
-    cfg = read_json(config_path)
-    posts = read_json(posts_path)
-    if not isinstance(cfg, dict):
+    raw_cfg = read_json(config_path)
+    raw_posts = read_json(posts_path)
+    if not isinstance(raw_cfg, dict):
         LOGGER.error(ERROR_MESSAGES.CONFIG_JSON_OBJECT_REQUIRED)
         return 1
-    if not isinstance(posts, list):
+    if not isinstance(raw_posts, list):
         LOGGER.error(ERROR_MESSAGES.POSTS_JSON_ARRAY_REQUIRED_HOUSEKEEPING)
         return 1
 
-    if not _config_bool(cfg, FEATURE_FLAGS.HOUSEKEEPING_ENABLED_KEY, FEATURE_FLAGS.DEFAULT_TRUE):
+    config = RepoConfig.model_validate(raw_cfg)
+
+    if not config.housekeeping_enabled:
         LOGGER.audit("housekeeping_skipped: housekeeping disabled in config")
         LOGGER.info("Skip: housekeeping is disabled by config")
         return 0
 
-    expiry_hours = _config_float(cfg, HOUSEKEEPING_WINDOWS_HOURS.EXPIRY_KEY, HOUSEKEEPING_WINDOWS_HOURS.EXPIRY)
-    reminder_1_hours = _config_float(
-        cfg,
-        HOUSEKEEPING_WINDOWS_HOURS.REMINDER_1_KEY,
-        HOUSEKEEPING_WINDOWS_HOURS.REMINDER_1_START,
-    )
-    reminder_2_hours = _config_float(
-        cfg,
-        HOUSEKEEPING_WINDOWS_HOURS.REMINDER_2_KEY,
-        HOUSEKEEPING_WINDOWS_HOURS.REMINDER_2_START,
-    )
+    posts = [PostRecord.model_validate(p) for p in raw_posts if isinstance(p, dict)]
+
+    expiry_hours = config.housekeeping_expiry_hours
+    reminder_1_hours = config.housekeeping_reminder_1_hours
+    reminder_2_hours = config.housekeeping_reminder_2_hours
     reminder_span = HOUSEKEEPING_WINDOWS_HOURS.REMINDER_1_END - HOUSEKEEPING_WINDOWS_HOURS.REMINDER_1_START
     reminder_1_end = reminder_1_hours + reminder_span
     reminder_2_end = reminder_2_hours + reminder_span
-    linkedin_warning_days = _config_int(
-        cfg,
-        TOKEN_REMINDER_DAYS.LINKEDIN_WARNING_KEY,
-        TOKEN_REMINDER_DAYS.LINKEDIN_WARNING,
-    )
-    linkedin_urgent_days = _config_int(
-        cfg,
-        TOKEN_REMINDER_DAYS.LINKEDIN_URGENT_KEY,
-        TOKEN_REMINDER_DAYS.LINKEDIN_URGENT,
-    )
-    pat_warning_days = _config_int(cfg, TOKEN_REMINDER_DAYS.PAT_WARNING_KEY, TOKEN_REMINDER_DAYS.PAT_WARNING)
 
     now = datetime.now(timezone.utc)
     changed_posts = False
@@ -150,83 +96,78 @@ def main() -> int:
     expired_count = 0
 
     for post in posts:
-        if not isinstance(post, dict):
-            continue
-        status = str(post.get("status", ""))
-        if status not in ACTIVE_POST_STATUSES.ALL:
+        if post.status not in ACTIVE_POST_STATUSES.ALL:
             continue
 
-        post_id = str(post.get("id", "?"))
-        topic = str(post.get("topic", "Unknown"))
-        created_at = parse_iso8601(post.get("created_at"))
+        created_at = parse_iso8601(post.created_at)
         if created_at is None:
-            LOGGER.audit(f"invalid_created_at post_id={post_id}")
+            LOGGER.audit(f"invalid_created_at post_id={post.id}")
             continue
 
         age_hours = hours_since(now, created_at)
         if age_hours >= expiry_hours:
-            post["status"] = POST_STATUSES.EXPIRED
-            post["error"] = f"expired_after_{_hours_label(expiry_hours)}h"
+            post.status = POST_STATUSES.EXPIRED
+            post.error = f"expired_after_{_hours_label(expiry_hours)}h"
             changed_posts = True
             expired_count += 1
             _post_bot_send(
                 f"⌛ Draft expired after {_hours_label(expiry_hours)}h without approval.\n\n"
-                f"Post: {post_id}\nTopic: {topic}"
+                f"Post: {post.id}\nTopic: {post.topic}"
             )
-            LOGGER.audit(f"post_expired post_id={post_id}")
+            LOGGER.audit(f"post_expired post_id={post.id}")
             continue
 
         if reminder_1_hours <= age_hours < reminder_1_end:
             reminders_sent += 1
             _post_bot_send(
                 f"⏰ Approval reminder ({_hours_label(reminder_1_hours)}h)\n\n"
-                f"Post: {post_id}\nTopic: {topic}\nStatus: {status}\n\n"
+                f"Post: {post.id}\nTopic: {post.topic}\nStatus: {post.status}\n\n"
                 f"Please approve, edit, or reject in Telegram."
             )
-            LOGGER.audit(f"reminder_{_hours_label(reminder_1_hours)}h post_id={post_id}")
+            LOGGER.audit(f"reminder_{_hours_label(reminder_1_hours)}h post_id={post.id}")
             continue
 
         if reminder_2_hours <= age_hours < reminder_2_end:
             reminders_sent += 1
             _post_bot_send(
                 f"⏰ Approval reminder ({_hours_label(reminder_2_hours)}h)\n\n"
-                f"Post: {post_id}\nTopic: {topic}\nStatus: {status}\n\n"
+                f"Post: {post.id}\nTopic: {post.topic}\nStatus: {post.status}\n\n"
                 f"Draft will expire automatically at {_hours_label(expiry_hours)}h."
             )
-            LOGGER.audit(f"reminder_{_hours_label(reminder_2_hours)}h post_id={post_id}")
+            LOGGER.audit(f"reminder_{_hours_label(reminder_2_hours)}h post_id={post.id}")
 
-    linkedin_refreshed = parse_iso8601(cfg.get("linkedin_token_refreshed_at"))
+    linkedin_refreshed = parse_iso8601(config.linkedin_token_refreshed_at)
     if linkedin_refreshed is None:
         LOGGER.audit("invalid_config: linkedin_token_refreshed_at")
     else:
         token_days = days_since(now, linkedin_refreshed)
-        if within_half_day_window(token_days, linkedin_warning_days):
+        if within_half_day_window(token_days, config.linkedin_warning_days):
             _post_bot_send(
                 "🔑 LinkedIn token expires soon (~10 days left).\n"
                 "Please refresh it to avoid posting failures."
             )
-            LOGGER.audit(f"token_warning day={linkedin_warning_days}")
-        if within_half_day_window(token_days, linkedin_urgent_days):
+            LOGGER.audit(f"token_warning day={config.linkedin_warning_days}")
+        if within_half_day_window(token_days, config.linkedin_urgent_days):
             _post_bot_send(
                 "🚨 LinkedIn token expires in ~2 days.\n"
                 "Refresh immediately to avoid posting failures."
             )
-            LOGGER.audit(f"token_warning day={linkedin_urgent_days}")
+            LOGGER.audit(f"token_warning day={config.linkedin_urgent_days}")
 
-    pat_created = parse_iso8601(cfg.get("pat_created_at"))
+    pat_created = parse_iso8601(config.pat_created_at)
     if pat_created is None:
         LOGGER.audit("invalid_config: pat_created_at")
     else:
         pat_days = days_since(now, pat_created)
-        if within_half_day_window(pat_days, pat_warning_days):
+        if within_half_day_window(pat_days, config.pat_warning_days):
             _post_bot_send(
                 "🔐 GitHub fine-grained PAT is nearing expiry (~10 days left).\n"
                 "Rotate PAT and update GitHub/Worker secrets."
             )
-            LOGGER.audit(f"pat_warning day={pat_warning_days}")
+            LOGGER.audit(f"pat_warning day={config.pat_warning_days}")
 
     if changed_posts:
-        write_json(posts_path, posts)
+        write_json(posts_path, [p.model_dump() for p in posts])
         if should_auto_push():
             try:
                 if commit_and_push(root, ["posts.json"], "chore: expire stale pending drafts"):
