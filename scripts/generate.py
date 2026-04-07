@@ -32,7 +32,7 @@ from common.paths import repo_root
 from common.repo_json import read_json, write_json
 from core.constants import ACTIVE_POST_STATUSES, ERROR_MESSAGES, GIT_ROUTING
 from core.llm import ensure_linkedin_skill_ready, generate_post_json, generate_post_json_with_feedback
-from core.llm_output import LlmPostOutput, validation_error_message
+from core.llm_output import LlmPostOutput, check_topic_alignment, validation_error_message
 from core.models import RepoConfig, Topic
 from core.post_record import PostRecord, build_post, compose_text, new_approval_token, next_post_id
 from integrations.git_push import commit_and_push, should_auto_push
@@ -80,7 +80,13 @@ def _run_llm(topic_title: str) -> LlmPostOutput | None:
                 )
             else:
                 data = generate_post_json(token=token, topic_title=topic_title, strict_retry=strict)
-            return LlmPostOutput.model_validate(data)
+            output = LlmPostOutput.model_validate(data)
+            alignment_err = check_topic_alignment(output, topic_title)
+            if alignment_err:
+                notes.append(f"attempt{attempt} alignment: {alignment_err}")
+                feedback = alignment_err
+                continue
+            return output
         except ValidationError as exc:
             err = validation_error_message(exc)
             notes.append(f"attempt{attempt} validation: {err}")

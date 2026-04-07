@@ -273,3 +273,42 @@ class LlmPostOutput(BaseModel):
 def validation_error_message(exc: ValidationError) -> str:
     """Extract a human-readable error string from a Pydantic ValidationError."""
     return "; ".join(e["msg"].removeprefix("Value error, ") for e in exc.errors())
+
+
+_ALIGNMENT_STOP_WORDS = frozenset({
+    "a", "an", "the", "and", "or", "but", "in", "on", "at", "to", "for",
+    "of", "with", "by", "from", "into", "as", "via", "per", "its",
+    "it", "is", "are", "was", "were", "be", "been", "being",
+    "have", "has", "had", "do", "does", "did",
+    "will", "would", "could", "should", "may", "might", "can",
+    "how", "what", "when", "where", "why", "who", "which", "that", "this",
+    "not", "no", "nor",
+    "using", "uses", "used",
+    "based", "without",
+})
+
+
+def _extract_topic_keywords(topic_title: str) -> list[str]:
+    """Extract meaningful lowercase keywords from a topic title."""
+    tokens = re.findall(r"[a-zA-Z0-9]+", topic_title.lower())
+    return [t for t in tokens if len(t) > 2 and t not in _ALIGNMENT_STOP_WORDS]
+
+
+def check_topic_alignment(output: LlmPostOutput, topic_title: str) -> str | None:
+    """Return an error message if content drifted from the topic, or None if aligned."""
+    keywords = _extract_topic_keywords(topic_title)
+    if len(keywords) < LLM_OUTPUT.TOPIC_ALIGNMENT_MIN_KEYWORDS:
+        return None
+
+    full_text = f"{output.hook} {output.body} {output.cta}".lower()
+    matched = [kw for kw in keywords if kw in full_text]
+    ratio = len(matched) / len(keywords)
+
+    if ratio >= LLM_OUTPUT.TOPIC_ALIGNMENT_MIN_OVERLAP:
+        return None
+
+    missing = sorted(set(keywords) - set(matched))
+    return (
+        f"content does not align with topic — only {len(matched)}/{len(keywords)} "
+        f"topic keywords found in post; missing: {', '.join(missing[:5])}"
+    )
