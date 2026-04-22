@@ -26,23 +26,18 @@ if str(_SCRIPT_DIR) not in sys.path:
 from common.paths import repo_root
 from common.repo_json import read_json, write_json
 from core.constants import ACTIVE_POST_STATUSES
-from core.post_record import build_post
+from core.post_record import PostRecord, build_post
 from integrations.git_push import commit_and_push, should_auto_push
 
+_NORMALIZE_KEYS = frozenset({
+    "id", "topic", "status", "approval_token", "telegram_message_id",
+    "content", "composed_text", "risk_flags",
+})
 
-def _normalize_post(p: dict) -> dict:
+
+def _normalize_post(p: PostRecord) -> dict:
     """Stable subset for equality (id + pending payload)."""
-    keys = (
-        "id",
-        "topic",
-        "status",
-        "approval_token",
-        "telegram_message_id",
-        "content",
-        "composed_text",
-        "risk_flags",
-    )
-    return {k: p.get(k) for k in keys if k in p}
+    return p.model_dump(include=_NORMALIZE_KEYS)
 
 
 def main() -> int:
@@ -114,15 +109,17 @@ def main() -> int:
         print("post_id and topic are required", file=sys.stderr)
         return 1
 
-    posts = read_json(posts_path)
-    if not isinstance(posts, list):
+    raw_posts = read_json(posts_path)
+    if not isinstance(raw_posts, list):
         print("posts.json must be a JSON array", file=sys.stderr)
         return 1
 
-    existing: dict | None = None
+    posts = [PostRecord.model_validate(p) for p in raw_posts if isinstance(p, dict)]
+
+    existing: PostRecord | None = None
     existing_index: int | None = None
     for i, p in enumerate(posts):
-        if isinstance(p, dict) and p.get("id") == post_id:
+        if p.id == post_id:
             existing = p
             existing_index = i
             break
@@ -138,9 +135,9 @@ def main() -> int:
         telegram_message_id=telegram_message_id,
     )
 
-    if existing is not None and existing.get("status") != ACTIVE_POST_STATUSES.PENDING:
+    if existing is not None and existing.status != ACTIVE_POST_STATUSES.PENDING:
         print(
-            f"Post {post_id} exists with status {existing.get('status')} — refuse to overwrite",
+            f"Post {post_id} exists with status {existing.status} — refuse to overwrite",
             file=sys.stderr,
         )
         return 1
@@ -157,7 +154,7 @@ def main() -> int:
         posts[existing_index] = new_post
         print(f"Updated pending post {post_id}", flush=True)
 
-    write_json(posts_path, posts)
+    write_json(posts_path, [p.model_dump() for p in posts])
 
     if should_auto_push():
         try:

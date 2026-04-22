@@ -16,6 +16,8 @@ import sys
 import traceback
 from pathlib import Path
 
+from pydantic import ValidationError
+
 try:
     from dotenv import load_dotenv
 except ImportError:
@@ -28,43 +30,25 @@ if str(_SCRIPT_DIR) not in sys.path:
 from common.logger import get_logger
 from common.paths import repo_root
 from common.repo_json import read_json, write_json
-from core.constants import ACTIVE_POST_STATUSES, ERROR_MESSAGES, FEATURE_FLAGS, GIT_ROUTING
+from core.constants import ACTIVE_POST_STATUSES, ERROR_MESSAGES, GIT_ROUTING
 from core.llm import ensure_linkedin_skill_ready, generate_post_json, generate_post_json_with_feedback
-from core.llm_output import LlmPostOutput, to_llm_post_output, validate_llm_output
-from core.post_record import build_post, compose_text, new_approval_token, next_post_id
+from core.llm_output import LlmPostOutput, check_topic_alignment, validation_error_message
+from core.models import RepoConfig, Topic
+from core.post_record import PostRecord, build_post, compose_text, new_approval_token, next_post_id
 from integrations.git_push import commit_and_push, should_auto_push
 from integrations.telegram import inline_approve_edit_reject, send_message
 
 LOGGER = get_logger("generate")
 
 
-def _read_repo_config(root: Path) -> dict:
+def _read_repo_config(root: Path) -> RepoConfig:
     try:
         raw = read_json(root / GIT_ROUTING.CONFIG_PATH)
     except Exception:  # noqa: BLE001
-        return {}
-    return raw if isinstance(raw, dict) else {}
-
-
-def _config_bool(config: dict, key: str, default: bool) -> bool:
-    value = config.get(key)
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        lowered = value.strip().lower()
-        if lowered in {"1", "true", "yes", "on"}:
-            return True
-        if lowered in {"0", "false", "no", "off"}:
-            return False
-    return default
-
-
-def _config_string(config: dict, key: str) -> str | None:
-    value = config.get(key)
-    if not isinstance(value, str):
-        return None
-    cleaned = value.strip()
-    return cleaned or None
+        return RepoConfig()
+    if not isinstance(raw, dict):
+        return RepoConfig()
+    return RepoConfig.model_validate(raw)
 
 
 def _draft_message(topic: str, composed: str, risk_flags: list[str]) -> str:
@@ -96,9 +80,15 @@ def _run_llm(topic_title: str) -> LlmPostOutput | None:
                 )
             else:
                 data = generate_post_json(token=token, topic_title=topic_title, strict_retry=strict)
-            ok, err = validate_llm_output(data)
-            if ok:
-                return to_llm_post_output(data)
+            output = LlmPostOutput.model_validate(data)
+            alignment_err = check_topic_alignment(output, topic_title)
+            if alignment_err:
+                notes.append(f"attempt{attempt} alignment: {alignment_err}")
+                feedback = alignment_err
+                continue
+            return output
+        except ValidationError as exc:
+            err = validation_error_message(exc)
             notes.append(f"attempt{attempt} validation: {err}")
             feedback = err
         except Exception as exc:  # noqa: BLE001
@@ -118,16 +108,16 @@ def _require_telegram_env() -> tuple[str, str] | None:
     return post_token, chat_id
 
 
-def _resend_pending_post(*, root: Path, posts_path: Path, posts: list[dict]) -> int:
+def _resend_pending_post(*, root: Path, posts_path: Path, posts: list[PostRecord]) -> int:
     post_id = os.environ.get("WF_POST_ID", "").strip()
     if not post_id:
         LOGGER.audit("resend_invalid: missing WF_POST_ID")
         LOGGER.error(ERROR_MESSAGES.WF_POST_ID_REQUIRED)
         return 1
 
-    target: dict | None = None
+    target: PostRecord | None = None
     for p in posts:
-        if p.get("id") == post_id:
+        if p.id == post_id:
             target = p
             break
 
@@ -136,17 +126,15 @@ def _resend_pending_post(*, root: Path, posts_path: Path, posts: list[dict]) -> 
         LOGGER.error(f"Post not found: {post_id}")
         return 1
 
-    status = str(target.get("status", ""))
-    if status != ACTIVE_POST_STATUSES.PENDING:
-        LOGGER.audit(f"resend_invalid: status={status} post_id={post_id}")
-        LOGGER.error(f"resend requires pending post; got status={status}")
+    if target.status != ACTIVE_POST_STATUSES.PENDING:
+        LOGGER.audit(f"resend_invalid: status={target.status} post_id={post_id}")
+        LOGGER.error(f"resend requires pending post; got status={target.status}")
         return 1
 
-    approval_token = str(target.get("approval_token", "")).strip()
-    topic_title = str(target.get("topic", "")).strip()
-    composed = str(target.get("composed_text", "")).strip()
-    raw_flags = target.get("risk_flags")
-    risk_flags = [x for x in raw_flags if isinstance(x, str)] if isinstance(raw_flags, list) else []
+    approval_token = (target.approval_token or "").strip()
+    topic_title = target.topic.strip()
+    composed = target.composed_text.strip()
+    risk_flags = target.risk_flags
     if not approval_token:
         LOGGER.audit(f"resend_invalid: missing approval_token post_id={post_id}")
         LOGGER.error(f"Post missing approval_token: {post_id}")
@@ -189,8 +177,8 @@ def _resend_pending_post(*, root: Path, posts_path: Path, posts: list[dict]) -> 
         LOGGER.error(ERROR_MESSAGES.TELEGRAM_RESPONSE_MISSING_MESSAGE_ID)
         return 1
 
-    target["telegram_message_id"] = message_id
-    write_json(posts_path, posts)
+    target.telegram_message_id = message_id
+    write_json(posts_path, [p.model_dump() for p in posts])
 
     LOGGER.audit(f"draft_resent post_id={post_id}")
     if should_auto_push():
@@ -221,49 +209,53 @@ def main() -> int:
     posts_path = root / "posts.json"
     topics_path = root / "topics.json"
 
-    posts = read_json(posts_path)
-    if not isinstance(posts, list):
+    raw_posts = read_json(posts_path)
+    if not isinstance(raw_posts, list):
         LOGGER.error(ERROR_MESSAGES.POSTS_JSON_ARRAY_REQUIRED)
         return 1
 
     action = os.environ.get("WF_ACTION") or "generate"
-    post_dicts = [p for p in posts if isinstance(p, dict)]
+    posts = [PostRecord.model_validate(p) for p in raw_posts if isinstance(p, dict)]
     if action == "resend":
-        return _resend_pending_post(root=root, posts_path=posts_path, posts=post_dicts)
+        return _resend_pending_post(root=root, posts_path=posts_path, posts=posts)
     if action != "generate":
         LOGGER.audit(f"invalid_action: {action}")
         LOGGER.error(f"Invalid WF_ACTION: {action}")
         return 1
 
-    if not _config_bool(config, FEATURE_FLAGS.GENERATION_ENABLED_KEY, FEATURE_FLAGS.DEFAULT_TRUE):
+    if not config.generation_enabled:
         LOGGER.audit("generation_skipped: generation disabled in config")
         LOGGER.info("Skip: generation is disabled by config")
         return 0
 
-    configured_model = _config_string(config, FEATURE_FLAGS.DEFAULT_GITHUB_MODEL_KEY)
-    if configured_model and not os.environ.get("GITHUB_MODEL", "").strip():
-        os.environ["GITHUB_MODEL"] = configured_model
+    if config.default_github_model and not os.environ.get("GITHUB_MODEL", "").strip():
+        os.environ["GITHUB_MODEL"] = config.default_github_model
 
-    if _config_bool(config, FEATURE_FLAGS.SINGLE_ACTIVE_POST_KEY, FEATURE_FLAGS.DEFAULT_TRUE):
+    if config.single_active_post:
         for p in posts:
-            if isinstance(p, dict) and p.get("status") in ACTIVE_POST_STATUSES.ALL:
-                pid = p.get("id", "?")
-                LOGGER.audit(f"generation_skipped: active post exists ({pid})")
-                LOGGER.info(f"Skip: active post {pid}")
+            if p.status in ACTIVE_POST_STATUSES.ALL:
+                LOGGER.audit(f"generation_skipped: active post exists ({p.id})")
+                LOGGER.info(f"Skip: active post {p.id}")
                 return 0
     else:
         LOGGER.audit("single_active_post_disabled: proceeding despite active posts")
         LOGGER.info("single_active_post disabled in config; allowing a new draft")
 
-    topics = read_json(topics_path)
-    if not isinstance(topics, list) or not topics:
+    raw_topics = read_json(topics_path)
+    if not isinstance(raw_topics, list) or not raw_topics:
         LOGGER.audit("topic_backlog_exhausted")
         LOGGER.info("No topics")
         return 0
 
-    chosen: dict | None = None
+    topics = [Topic.model_validate(t) for t in raw_topics if isinstance(t, dict)]
+    if not topics:
+        LOGGER.audit("topic_backlog_exhausted")
+        LOGGER.info("No topics")
+        return 0
+
+    chosen: Topic | None = None
     for t in topics:
-        if isinstance(t, dict) and not t.get("used"):
+        if not t.used:
             chosen = t
             break
 
@@ -272,7 +264,7 @@ def main() -> int:
         LOGGER.info("All topics used")
         return 0
 
-    topic_title = str(chosen.get("title", "")).strip()
+    topic_title = chosen.title.strip()
     if not topic_title:
         LOGGER.audit("llm_output_invalid: empty topic title")
         return 0
@@ -292,12 +284,12 @@ def main() -> int:
     if llm is None:
         return 0
 
-    hook = llm["hook"]
-    body = llm["body"]
-    cta = llm["cta"]
-    risk_flags = llm["risk_flags"]
+    hook = llm.hook
+    body = llm.body
+    cta = llm.cta
+    risk_flags = llm.risk_flags
 
-    post_id = next_post_id(post_dicts)
+    post_id = next_post_id(posts)
     approval_token = new_approval_token()
     composed = compose_text(hook, body, cta)
 
@@ -342,12 +334,12 @@ def main() -> int:
         telegram_message_id=message_id,
     )
 
-    chosen["used"] = True
-    post_dicts.append(new_post)
-    write_json(posts_path, post_dicts)
-    write_json(topics_path, topics)
+    chosen.used = True
+    posts.append(new_post)
+    write_json(posts_path, [p.model_dump() for p in posts])
+    write_json(topics_path, [t.model_dump() for t in topics])
 
-    LOGGER.audit(f"draft_generated post_id={post_id} topic={chosen.get('id', '?')}")
+    LOGGER.audit(f"draft_generated post_id={post_id} topic={chosen.id}")
 
     if should_auto_push():
         try:

@@ -13,19 +13,32 @@ class LLM_RUNTIME:
         "No markdown code fences. Exactly four keys: hook, body, cta, risk_flags."
     )
     VALIDATION_FEEDBACK_PREFIX = "\n\nFix these validation issues from your previous draft:\n"
+    RATE_LIMIT_MAX_RETRIES = 3
+    RATE_LIMIT_BACKOFF_SECONDS = (10, 30, 60)
 
 
 class LLM_PROMPTS:
     BASE_SYSTEM_PROMPT = """You are writing a LinkedIn post for a software engineering professional's personal account.
 
 Constraints:
-- Simple, conversational language
+- Clear, concise, moderately technical language for software engineers
 - One core idea only
 - Body MUST use multiple short paragraphs separated by \\n\\n (never one big wall of text)
 - Body MUST contain exactly one line that starts with "Example:" (a concrete, specific illustration)
+- Explain the mechanism with concrete operational details (inputs/signals, decision step, trigger condition, and outcome)
+- Include one brief sentence on why this approach is used in practice
+- Use precise systems terminology (signals, thresholds, control loop, latency, allocation, or optimization) where relevant
+- Prefer established, non-speculative claims; if unsure, stay high-level instead of inventing proprietary internals
+- Keep numeric claims self-consistent; if using both wording and numbers, they should agree (e.g., double ~= 2x)
+- Do not use hypothetical equations, symbolic variables, or pseudo-math notation
 - If the topic is about an algorithm/process that is clearly known, add a compact ASCII diagram (max 3 short lines using arrows ->); otherwise omit any diagram
 - Avoid buzzwords, jargon, and filler
+- Avoid cliche hype phrases like "game-changer" or "powerful tool"
+- Avoid generic motivational CTA templates; end with a concrete, topic-tied takeaway
+- Do not start CTA with "Understanding"; use a specific practical takeaway statement
+- Do not force a downside/dissatisfaction sentence; include caveats only when directly relevant
 - Hook must grab attention in the first line (max 150 chars)
+- CTA must be a statement (not a question)
 - Total post length (hook + body + CTA) must be under 2000 characters
 
 Output ONLY valid JSON matching this exact schema (no markdown fences, no commentary):
@@ -44,7 +57,18 @@ Output ONLY the JSON object."""
     REQUIRED_SNIPPETS = (
         'exactly one line that starts with "Example:"',
         "MUST use multiple short paragraphs separated by",
+        "concrete operational details (inputs/signals, decision step, trigger condition, and outcome)",
+        "Include one brief sentence on why this approach is used in practice",
+        "Use precise systems terminology (signals, thresholds, control loop, latency, allocation, or optimization)",
+        "Prefer established, non-speculative claims; if unsure, stay high-level instead of inventing proprietary internals",
+        "Keep numeric claims self-consistent; if using both wording and numbers, they should agree (e.g., double ~= 2x)",
+        "Do not use hypothetical equations, symbolic variables, or pseudo-math notation",
+        'Avoid cliche hype phrases like "game-changer" or "powerful tool"',
+        "Avoid generic motivational CTA templates; end with a concrete, topic-tied takeaway",
+        'Do not start CTA with "Understanding"; use a specific practical takeaway statement',
+        "Do not force a downside/dissatisfaction sentence; include caveats only when directly relevant",
         "compact ASCII diagram (max 3 short lines",
+        "CTA must be a statement (not a question)",
         "EXAMPLE of a well-formed body value",
     )
     FORBIDDEN_SNIPPETS = (
@@ -63,7 +87,10 @@ class LLM_OUTPUT:
     MAX_LONG_PARAGRAPH_CHARS = 360
     LONG_BODY_REQUIRES_BREAK_CHARS = 280
     MAX_ASCII_LINES = 3
-    MAX_ASCII_LINE_CHARS = 60
+    # Diagram labels (e.g. [step] -> [step]) often exceed a very tight cap; keep a hard ceiling only.
+    MAX_ASCII_LINE_CHARS = 100
+    TOPIC_ALIGNMENT_MIN_KEYWORDS = 3
+    TOPIC_ALIGNMENT_MIN_OVERLAP = 0.4
 
 
 class GIT_AUTOMATION:

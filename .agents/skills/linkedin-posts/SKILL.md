@@ -2,7 +2,7 @@
 name: linkedin-posts
 description: When the user wants to create LinkedIn post copy or optimize for LinkedIn. Also use when the user mentions "LinkedIn post," "LinkedIn article," "professional post," "post to LinkedIn," "LinkedIn content," "LinkedIn copy," "B2B LinkedIn," "LinkedIn engagement," or "LinkedIn marketing." For LinkedIn ads, use linkedin-ads.
 metadata:
-  version: 1.1.3
+  version: 1.2.0
 ---
 
 # Platforms: LinkedIn
@@ -70,6 +70,20 @@ Use this section only when the topic includes an algorithm/process.
   - do **not** invent steps,
   - do **not** include a guessed diagram,
   - ask for clarification or skip algorithm-specific details.
+
+## Factual Validation Protocol (Mandatory)
+
+Use this protocol for every technical post:
+
+- Prefer broadly established mechanisms over speculative internals.
+- Do **not** invent proprietary thresholds, hidden ranking factors, or exact production constants.
+- If uncertain, keep the explanation high-level and explicitly avoid precise unverifiable numbers.
+- Keep numeric wording internally consistent:
+  - `double` ~= `2x`
+  - `triple` ~= `3x`
+  - `50% increase` ~= `1.5x`
+- If using numbers in `Example:`, ensure they are plausible and coherent with the stated mechanism.
+- If certainty is low, treat numbers as illustrative and avoid presenting them as definitive facts.
 
 ## Output Format
 

@@ -4,28 +4,85 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any, TypedDict
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 from core.constants import LLM_OUTPUT
 
 
-class LlmPostOutput(TypedDict):
-    """Structured LLM output after validation (§3.3.1)."""
+def _dedupe_flags(flags: list[str]) -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+    for raw in flags:
+        normalized = raw.strip()
+        if not normalized:
+            continue
+        lowered = normalized.lower()
+        if lowered in {"none", "n/a", "na"}:
+            continue
+        if lowered in seen:
+            continue
+        seen.add(lowered)
+        out.append(normalized)
+    return out
 
-    hook: str
-    body: str
-    cta: str
-    risk_flags: list[str]
+
+def _extract_example_line(body: str) -> str:
+    prefix = LLM_OUTPUT.EXAMPLE_PREFIX.lower()
+    for line in body.splitlines():
+        stripped = line.strip()
+        if stripped.lower().startswith(prefix):
+            return stripped
+    return ""
 
 
-def to_llm_post_output(data: dict[str, Any]) -> LlmPostOutput:
-    """Narrow a validated dict to LlmPostOutput. Call only after validate_llm_output passes."""
-    return {
-        "hook": str(data["hook"]),
-        "body": str(data["body"]),
-        "cta": str(data["cta"]),
-        "risk_flags": [str(x) for x in data["risk_flags"]],
-    }
+def _numeric_consistency_warning_flags_from_example(body: str) -> list[str]:
+    """Non-blocking, domain-agnostic checks for obvious numeric inconsistencies."""
+    line = _extract_example_line(body)
+    if not line:
+        return []
+
+    lowered = line.lower()
+    warnings: list[str] = []
+
+    multipliers = [float(raw) for raw in re.findall(r"(\d+(?:\.\d+)?)\s*x\b", lowered)]
+    percent_increases = [
+        float(raw)
+        for raw in re.findall(r"(\d+(?:\.\d+)?)\s*%\s*(?:increase|higher|up|more)", lowered)
+    ]
+
+    if any(value <= 0 for value in multipliers):
+        warnings.append("math_check: multiplier must be greater than 0x")
+    if any(value <= -100 for value in percent_increases):
+        warnings.append("math_check: percentage change below -100% is not feasible")
+
+    word_expectations: list[tuple[tuple[str, ...], float, str]] = [
+        (("double", "doubled", "twice"), 2.0, "math_check: wording implies ~2.0x but multiplier differs"),
+        (
+            ("triple", "tripled", "three times"),
+            3.0,
+            "math_check: wording implies ~3.0x but multiplier differs",
+        ),
+        (("half", "halved"), 0.5, "math_check: wording implies ~0.5x but multiplier differs"),
+    ]
+
+    for tokens, expected, warning in word_expectations:
+        if any(token in lowered for token in tokens) and multipliers:
+            if all(abs(multiplier - expected) > 0.2 for multiplier in multipliers):
+                warnings.append(warning)
+
+    if multipliers and percent_increases:
+        expected_from_percent = [1.0 + (pct / 100.0) for pct in percent_increases]
+        close_match = any(
+            abs(multiplier - expected) <= 0.15
+            for multiplier in multipliers
+            for expected in expected_from_percent
+        )
+        if not close_match:
+            warnings.append("math_check: percentage change and x-multiplier appear inconsistent")
+
+    return _dedupe_flags(warnings)
 
 
 def extract_json_object(raw: str) -> dict[str, Any]:
@@ -74,50 +131,221 @@ def _ascii_diagram_lines(body: str) -> list[str]:
     return lines
 
 
-def validate_llm_output(data: dict[str, Any]) -> tuple[bool, str]:
-    """Return (ok, error_message)."""
-    if set(data.keys()) != LLM_OUTPUT.REQUIRED_KEYS:
-        return False, f"keys must be exactly {sorted(LLM_OUTPUT.REQUIRED_KEYS)}, got {sorted(data.keys())}"
+def _has_equation_style_line(body: str) -> bool:
+    return bool(re.search(r"(?m)^\s*[A-Za-z_][A-Za-z0-9_]*\s*=", body))
 
-    hook = data["hook"]
-    body = data["body"]
-    cta = data["cta"]
-    risk_flags = data["risk_flags"]
 
-    if not isinstance(hook, str) or not isinstance(body, str) or not isinstance(cta, str):
-        return False, "hook, body, cta must be strings"
-    if not isinstance(risk_flags, list) or not all(isinstance(x, str) for x in risk_flags):
-        return False, "risk_flags must be an array of strings"
-    if not hook.strip() or not body.strip() or not cta.strip():
-        return False, "hook, body, cta must be non-empty strings"
+def _count_distinct_phrases(text: str, phrases: tuple[str, ...]) -> int:
+    lowered = text.lower()
+    return sum(1 for phrase in phrases if phrase in lowered)
 
-    if (
-        len(hook) > LLM_OUTPUT.MAX_HOOK_CHARS
-        or len(body) > LLM_OUTPUT.MAX_BODY_CHARS
-        or len(cta) > LLM_OUTPUT.MAX_CTA_CHARS
-    ):
-        return False, "length limits exceeded"
-    if len(hook) + len(body) + len(cta) > LLM_OUTPUT.MAX_TOTAL_CHARS:
-        return False, "combined length > 2000"
-    for part in (hook, body, cta):
-        if _has_html_tags(part):
-            return False, "raw HTML tags not allowed"
 
-    paragraphs = _paragraphs(body)
-    if len(body.strip()) >= LLM_OUTPUT.LONG_BODY_REQUIRES_BREAK_CHARS and len(paragraphs) < 2:
-        return False, "body must use short paragraphs/line breaks (single large block is not allowed)"
-    if any(len(paragraph) > LLM_OUTPUT.MAX_LONG_PARAGRAPH_CHARS for paragraph in paragraphs):
-        return False, "body paragraphs are too long; split into shorter chunks"
+def _contains_any_phrase(text: str, phrases: tuple[str, ...]) -> bool:
+    lowered = text.lower()
+    return any(phrase in lowered for phrase in phrases)
 
-    example_count = _example_line_count(body)
-    if example_count != 1:
-        return False, f'body must contain exactly one line prefixed with "{LLM_OUTPUT.EXAMPLE_PREFIX}"'
 
-    ascii_lines = _ascii_diagram_lines(body)
-    if len(ascii_lines) > LLM_OUTPUT.MAX_ASCII_LINES:
-        return False, f"ASCII illustration must be at most {LLM_OUTPUT.MAX_ASCII_LINES} lines"
-    if any(len(line) > LLM_OUTPUT.MAX_ASCII_LINE_CHARS for line in ascii_lines):
-        return False, f"ASCII illustration lines must be <= {LLM_OUTPUT.MAX_ASCII_LINE_CHARS} chars"
+_TECHNICAL_CORE_CUES = (
+    "algorithm", "signal", "metric", "trigger", "decision", "condition",
+    "threshold", "latency", "throughput", "capacity", "utilization", "rate",
+    "availability", "allocation", "requests", "drivers", "feedback loop",
+    "control loop", "pipeline", "model", "cache", "queue", "optimization",
+    "constraint", "input", "output", "demand", "supply",
+    # Architecture & delivery
+    "architecture", "deployment", "rollback", "release", "runtime", "compile",
+    "infrastructure", "provisioning", "orchestration", "namespace", "workload",
+    "endpoint", "middleware", "handler", "interface", "abstraction", "module",
+    "dependency", "contract", "schema", "serialization", "payload",
+    # Data & storage
+    "database", "transaction", "index", "query", "shard", "partition",
+    "replica", "storage", "memory", "disk", "blob", "record",
+    # Concurrency & reliability
+    "async", "synchronous", "concurrency", "parallel", "thread", "process",
+    "timeout", "retry", "backoff", "failure", "exception", "deadlock",
+    "race condition", "circuit breaker", "bulkhead",
+    # Networking & APIs
+    "network", "connection", "proxy", "gateway", "http", "https", "tls",
+    "grpc", "websocket", "authentication", "authorization", "encryption",
+    # Observability & ops
+    "observability", "monitoring", "logging", "tracing", "instrumentation",
+    "profiling", "benchmark", "scaling", "autoscaling",
+    # Messaging & events
+    "event", "stream", "batch", "broker", "subscriber", "producer", "consumer",
+    "webhook", "message", "dead letter", "backpressure",
+    # Engineering practice
+    "refactor", "invariant", "regression", "validation", "verification",
+    "compile-time", "type safety", "generic",
+)
 
-    return True, ""
+_TECHNICAL_ADVANCED_CUES = (
+    "threshold", "latency", "throughput", "feedback loop", "control loop",
+    "optimization", "optimize", "constraint", "utilization", "capacity",
+    "allocation", "allocate", "pipeline", "queue", "idempotency", "idempotent",
+    "consistency", "replication", "model", "distributed", "atomic",
+    "isolation", "durability", "serializ", "partitioning", "sharding",
+    "virtualization", "sandbox", "tenancy", "saga", "compensation",
+    "kubernetes", "container", "terraform",
+)
 
+_TECHNICAL_TRIGGER_CUES = (
+    "when", "if", "exceeds", "drops below", "crosses", "trigger",
+    "triggers", "threshold",
+    # Causal / conditional phrasing common in engineering prose
+    "unless", "until", "otherwise", "whereas", "depends on", "depending on",
+    "once", "after", "before", "fallback", "falls back",
+    "escalate", "defer", "choose", "select", "route", "branch",
+    "compared to", "rather than", "instead of",
+)
+
+
+def _has_moderate_technical_depth(body: str) -> bool:
+    core_count = _count_distinct_phrases(body, _TECHNICAL_CORE_CUES)
+    advanced_count = _count_distinct_phrases(body, _TECHNICAL_ADVANCED_CUES)
+    has_trigger_logic = _contains_any_phrase(body, _TECHNICAL_TRIGGER_CUES)
+    # Relaxed: two distinct core cues, or one core plus one advanced cue;
+    # still require explicit conditional/causal language.
+    enough_cues = core_count >= 2 or (core_count >= 1 and advanced_count >= 1)
+    return enough_cues and has_trigger_logic
+
+
+_BANNED_PHRASES = (
+    "game-changer",
+    "powerful tool",
+    "embrace the power of",
+)
+
+_GENERIC_CTA_PATTERNS = ("can improve your approach",)
+
+
+class LlmPostOutput(BaseModel):
+    """Validated LLM output per docs/ARCHITECTURE.md §4.1."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    hook: str = Field(max_length=LLM_OUTPUT.MAX_HOOK_CHARS)
+    body: str = Field(max_length=LLM_OUTPUT.MAX_BODY_CHARS)
+    cta: str = Field(max_length=LLM_OUTPUT.MAX_CTA_CHARS)
+    risk_flags: list[str] = Field(default_factory=list)
+
+    @field_validator("hook", "body", "cta")
+    @classmethod
+    def _must_be_non_empty(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("must be non-empty")
+        return v
+
+    @field_validator("hook", "body", "cta")
+    @classmethod
+    def _no_html_tags(cls, v: str) -> str:
+        if _has_html_tags(v):
+            raise ValueError("raw HTML tags not allowed")
+        return v
+
+    @field_validator("hook", "body")
+    @classmethod
+    def _no_banned_phrases(cls, v: str) -> str:
+        if any(phrase in v.lower() for phrase in _BANNED_PHRASES):
+            raise ValueError("copy must avoid cliche/template phrases; use specific wording")
+        return v
+
+    @field_validator("risk_flags")
+    @classmethod
+    def _dedupe_risk_flags(cls, v: list[str]) -> list[str]:
+        return _dedupe_flags(v)
+
+    @model_validator(mode="after")
+    def _validate_content_rules(self) -> LlmPostOutput:
+        if len(self.hook) + len(self.body) + len(self.cta) > LLM_OUTPUT.MAX_TOTAL_CHARS:
+            raise ValueError("combined length > 2000")
+
+        lowered_cta = self.cta.strip().lower()
+        if lowered_cta.startswith("understanding "):
+            raise ValueError("cta must be specific and practical, not a generic template")
+        if any(p in lowered_cta for p in _GENERIC_CTA_PATTERNS):
+            raise ValueError("cta must be specific and practical, not a generic template")
+        if "?" in self.cta:
+            raise ValueError("cta must be a statement and must not be phrased as a question")
+
+        paragraphs = _paragraphs(self.body)
+        if len(self.body.strip()) >= LLM_OUTPUT.LONG_BODY_REQUIRES_BREAK_CHARS and len(paragraphs) < 2:
+            raise ValueError(
+                "body must use short paragraphs/line breaks (single large block is not allowed)"
+            )
+        if any(len(p) > LLM_OUTPUT.MAX_LONG_PARAGRAPH_CHARS for p in paragraphs):
+            raise ValueError("body paragraphs are too long; split into shorter chunks")
+
+        if not _has_moderate_technical_depth(self.body):
+            raise ValueError(
+                "body must include concrete technical detail "
+                "(at least two engineering cues or one cue plus a deeper systems term, "
+                "plus conditional or causal phrasing)"
+            )
+
+        if _has_equation_style_line(self.body):
+            raise ValueError("body must avoid hypothetical equation-style notation")
+
+        example_count = _example_line_count(self.body)
+        if example_count != 1:
+            raise ValueError(
+                f'body must contain exactly one line prefixed with "{LLM_OUTPUT.EXAMPLE_PREFIX}"'
+            )
+
+        ascii_lines = _ascii_diagram_lines(self.body)
+        if len(ascii_lines) > LLM_OUTPUT.MAX_ASCII_LINES:
+            raise ValueError(
+                f"ASCII illustration must be at most {LLM_OUTPUT.MAX_ASCII_LINES} lines"
+            )
+        if any(len(line) > LLM_OUTPUT.MAX_ASCII_LINE_CHARS for line in ascii_lines):
+            raise ValueError(
+                f"ASCII illustration lines must be <= {LLM_OUTPUT.MAX_ASCII_LINE_CHARS} chars"
+            )
+
+        math_flags = _numeric_consistency_warning_flags_from_example(self.body)
+        if math_flags:
+            self.risk_flags = _dedupe_flags([*self.risk_flags, *math_flags])
+
+        return self
+
+
+def validation_error_message(exc: ValidationError) -> str:
+    """Extract a human-readable error string from a Pydantic ValidationError."""
+    return "; ".join(e["msg"].removeprefix("Value error, ") for e in exc.errors())
+
+
+_ALIGNMENT_STOP_WORDS = frozenset({
+    "a", "an", "the", "and", "or", "but", "in", "on", "at", "to", "for",
+    "of", "with", "by", "from", "into", "as", "via", "per", "its",
+    "it", "is", "are", "was", "were", "be", "been", "being",
+    "have", "has", "had", "do", "does", "did",
+    "will", "would", "could", "should", "may", "might", "can",
+    "how", "what", "when", "where", "why", "who", "which", "that", "this",
+    "not", "no", "nor",
+    "using", "uses", "used",
+    "based", "without",
+})
+
+
+def _extract_topic_keywords(topic_title: str) -> list[str]:
+    """Extract meaningful lowercase keywords from a topic title."""
+    tokens = re.findall(r"[a-zA-Z0-9]+", topic_title.lower())
+    return [t for t in tokens if len(t) > 2 and t not in _ALIGNMENT_STOP_WORDS]
+
+
+def check_topic_alignment(output: LlmPostOutput, topic_title: str) -> str | None:
+    """Return an error message if content drifted from the topic, or None if aligned."""
+    keywords = _extract_topic_keywords(topic_title)
+    if len(keywords) < LLM_OUTPUT.TOPIC_ALIGNMENT_MIN_KEYWORDS:
+        return None
+
+    full_text = f"{output.hook} {output.body} {output.cta}".lower()
+    matched = [kw for kw in keywords if kw in full_text]
+    ratio = len(matched) / len(keywords)
+
+    if ratio >= LLM_OUTPUT.TOPIC_ALIGNMENT_MIN_OVERLAP:
+        return None
+
+    missing = sorted(set(keywords) - set(matched))
+    return (
+        f"content does not align with topic — only {len(matched)}/{len(keywords)} "
+        f"topic keywords found in post; missing: {', '.join(missing[:5])}"
+    )
