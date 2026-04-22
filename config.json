@@ -10,7 +10,7 @@
   "generation_enabled": true,
   "housekeeping_enabled": true,
   "single_active_post": true,
-  "default_github_model": "openai/gpt-5",
+  "default_github_model": "openai/gpt-4o-mini",
   "__comment_housekeeping_windows": "Hours since draft creation when reminders and expiry should trigger.",
   "housekeeping_reminder_1_hours": 12,
   "housekeeping_reminder_2_hours": 24,

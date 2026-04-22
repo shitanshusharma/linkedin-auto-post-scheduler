@@ -87,40 +87,6 @@ def _headers(token: str) -> dict[str, str]:
     }
 
 
-def _omit_temperature_for_github_model(model: str) -> bool:
-    """OpenAI GPT-5 reasoning models reject explicit ``temperature``; the API returns 400."""
-    m = model.strip().lower()
-    if not m.startswith("openai/gpt-5"):
-        return False
-    # Catalog: ``openai/gpt-5-chat`` behaves as a chat model and accepts sampling params.
-    if m.startswith("openai/gpt-5-chat"):
-        return False
-    return True
-
-
-_INFERENCE_ERROR_BODY_MAX_CHARS = 2000
-
-
-def _response_body_preview(r: requests.Response) -> str:
-    """Return truncated response text for logs and exception messages."""
-    try:
-        text = (r.text or "").strip()
-    except (OSError, UnicodeDecodeError):
-        return ""
-    if len(text) > _INFERENCE_ERROR_BODY_MAX_CHARS:
-        return text[:_INFERENCE_ERROR_BODY_MAX_CHARS] + "…"
-    return text
-
-
-def _raise_inference_http_error(r: requests.Response) -> None:
-    """Raise HTTPError including provider JSON body (``raise_for_status`` omits it)."""
-    preview = _response_body_preview(r)
-    base = f"{r.status_code} {r.reason} for {r.url}"
-    message = f"{base} | {preview}" if preview else base
-    _logger.error("GitHub Models request failed: %s", message)
-    raise requests.HTTPError(message, response=r)
-
-
 def chat_completion(
     *,
     token: str,
@@ -136,13 +102,12 @@ def chat_completion(
     m = model or os.environ.get("GITHUB_MODEL", LLM_RUNTIME.DEFAULT_GITHUB_MODEL)
     payload: dict[str, Any] = {
         "model": m,
+        "temperature": temperature,
         "messages": [
             {"role": "system", "content": _system_prompt()},
             {"role": "user", "content": user_content},
         ],
     }
-    if not _omit_temperature_for_github_model(m):
-        payload["temperature"] = temperature
 
     last_exc: requests.HTTPError | None = None
     for attempt in range(LLM_RUNTIME.RATE_LIMIT_MAX_RETRIES + 1):
@@ -153,9 +118,8 @@ def chat_completion(
             timeout=120,
         )
         if r.status_code != 429:
-            if r.ok:
-                break
-            _raise_inference_http_error(r)
+            r.raise_for_status()
+            break
 
         last_exc = requests.HTTPError(response=r)
         if attempt >= LLM_RUNTIME.RATE_LIMIT_MAX_RETRIES:
