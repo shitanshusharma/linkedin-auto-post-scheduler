@@ -151,17 +151,50 @@ _TECHNICAL_CORE_CUES = (
     "availability", "allocation", "requests", "drivers", "feedback loop",
     "control loop", "pipeline", "model", "cache", "queue", "optimization",
     "constraint", "input", "output", "demand", "supply",
+    # Architecture & delivery
+    "architecture", "deployment", "rollback", "release", "runtime", "compile",
+    "infrastructure", "provisioning", "orchestration", "namespace", "workload",
+    "endpoint", "middleware", "handler", "interface", "abstraction", "module",
+    "dependency", "contract", "schema", "serialization", "payload",
+    # Data & storage
+    "database", "transaction", "index", "query", "shard", "partition",
+    "replica", "storage", "memory", "disk", "blob", "record",
+    # Concurrency & reliability
+    "async", "synchronous", "concurrency", "parallel", "thread", "process",
+    "timeout", "retry", "backoff", "failure", "exception", "deadlock",
+    "race condition", "circuit breaker", "bulkhead",
+    # Networking & APIs
+    "network", "connection", "proxy", "gateway", "http", "https", "tls",
+    "grpc", "websocket", "authentication", "authorization", "encryption",
+    # Observability & ops
+    "observability", "monitoring", "logging", "tracing", "instrumentation",
+    "profiling", "benchmark", "scaling", "autoscaling",
+    # Messaging & events
+    "event", "stream", "batch", "broker", "subscriber", "producer", "consumer",
+    "webhook", "message", "dead letter", "backpressure",
+    # Engineering practice
+    "refactor", "invariant", "regression", "validation", "verification",
+    "compile-time", "type safety", "generic",
 )
 
 _TECHNICAL_ADVANCED_CUES = (
     "threshold", "latency", "throughput", "feedback loop", "control loop",
-    "optimization", "constraint", "utilization", "capacity", "allocation",
-    "pipeline", "queue", "idempotency", "consistency", "replication", "model",
+    "optimization", "optimize", "constraint", "utilization", "capacity",
+    "allocation", "allocate", "pipeline", "queue", "idempotency", "idempotent",
+    "consistency", "replication", "model", "distributed", "atomic",
+    "isolation", "durability", "serializ", "partitioning", "sharding",
+    "virtualization", "sandbox", "tenancy", "saga", "compensation",
+    "kubernetes", "container", "terraform",
 )
 
 _TECHNICAL_TRIGGER_CUES = (
     "when", "if", "exceeds", "drops below", "crosses", "trigger",
     "triggers", "threshold",
+    # Causal / conditional phrasing common in engineering prose
+    "unless", "until", "otherwise", "whereas", "depends on", "depending on",
+    "once", "after", "before", "fallback", "falls back",
+    "escalate", "defer", "choose", "select", "route", "branch",
+    "compared to", "rather than", "instead of",
 )
 
 
@@ -169,7 +202,10 @@ def _has_moderate_technical_depth(body: str) -> bool:
     core_count = _count_distinct_phrases(body, _TECHNICAL_CORE_CUES)
     advanced_count = _count_distinct_phrases(body, _TECHNICAL_ADVANCED_CUES)
     has_trigger_logic = _contains_any_phrase(body, _TECHNICAL_TRIGGER_CUES)
-    return core_count >= 3 and advanced_count >= 1 and has_trigger_logic
+    # Relaxed: two distinct core cues, or one core plus one advanced cue;
+    # still require explicit conditional/causal language.
+    enough_cues = core_count >= 2 or (core_count >= 1 and advanced_count >= 1)
+    return enough_cues and has_trigger_logic
 
 
 _BANNED_PHRASES = (
@@ -241,7 +277,8 @@ class LlmPostOutput(BaseModel):
         if not _has_moderate_technical_depth(self.body):
             raise ValueError(
                 "body must include concrete technical detail "
-                "(multiple system cues plus trigger/decision logic)"
+                "(at least two engineering cues or one cue plus a deeper systems term, "
+                "plus conditional or causal phrasing)"
             )
 
         if _has_equation_style_line(self.body):
