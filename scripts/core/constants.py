@@ -87,7 +87,8 @@ class LLM_OUTPUT:
     MAX_LONG_PARAGRAPH_CHARS = 360
     LONG_BODY_REQUIRES_BREAK_CHARS = 280
     MAX_ASCII_LINES = 3
-    MAX_ASCII_LINE_CHARS = 60
+    # Diagram labels (e.g. [step] -> [step]) often exceed a very tight cap; keep a hard ceiling only.
+    MAX_ASCII_LINE_CHARS = 100
     TOPIC_ALIGNMENT_MIN_KEYWORDS = 3
     TOPIC_ALIGNMENT_MIN_OVERLAP = 0.4
 
