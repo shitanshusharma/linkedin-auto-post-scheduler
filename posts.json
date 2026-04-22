@@ -44,7 +44,7 @@
   {
     "id": "post_2026_04_22_001",
     "topic": "How Spotify's Discover Weekly Uses Collaborative Filtering and NLP",
-    "status": "approved",
+    "status": "posted",
     "approval_token": "b336bad4a83fb74a",
     "telegram_message_id": 24,
     "content": {
@@ -58,7 +58,7 @@
     "publish_attempted_at": "2026-04-22T21:09:27.323Z",
     "created_at": "2026-04-22T21:08:35Z",
     "approved_at": "2026-04-22T21:09:27.323Z",
-    "posted_at": null,
+    "posted_at": "2026-04-22T21:09:31.523Z",
     "linkedin_post_id": null,
     "error": null
   }
