@@ -5,7 +5,7 @@ Env:
   GITHUB_TOKEN — GitHub Models (models:read); set automatically in Actions
   TELEGRAM_POST_BOT_TOKEN, TELEGRAM_CHAT_ID
   TELEGRAM_LOG_BOT_TOKEN, TELEGRAM_LOG_CHAT_ID — optional Log Bot
-  GITHUB_MODEL — optional, default openai/gpt-4o-mini
+  GITHUB_MODEL — optional, default openai/gpt-4.1-mini
   WF_ACTION — generate | resend
   WF_POST_ID — required for resend
 """
