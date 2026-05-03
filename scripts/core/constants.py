@@ -5,7 +5,7 @@ class LLM_RUNTIME:
     REQUIRED_SKILL_NAME = "linkedin-posts"
     SKILLS_DIR = ".agents/skills"
     SKILLS_LOCK_FILE = "skills-lock.json"
-    DEFAULT_GITHUB_MODEL = "openai/gpt-4.1-mini"
+    DEFAULT_GITHUB_MODEL = "openai/gpt-4o-mini"
     DEFAULT_TEMPERATURE = 0.7
     STRICT_RETRY_TEMPERATURE = 0.5
     STRICT_RETRY_SUFFIX = (

@@ -13,6 +13,7 @@ import requests
 from common.paths import repo_root
 from core.constants import LLM_PROMPTS, LLM_RUNTIME, URLS
 from core.llm_output import extract_json_object
+from core.models import RepoConfig
 
 _logger = logging.getLogger(__name__)
 
@@ -87,6 +88,18 @@ def _headers(token: str) -> dict[str, str]:
     }
 
 
+def resolve_model(*, model: str | None = None, config: RepoConfig | None = None) -> str:
+    """Resolve the GitHub Models id with precedence: arg > env > config > constant."""
+    if model and model.strip():
+        return model.strip()
+    env_model = os.environ.get("GITHUB_MODEL", "").strip()
+    if env_model:
+        return env_model
+    if config and config.default_github_model and config.default_github_model.strip():
+        return config.default_github_model.strip()
+    return LLM_RUNTIME.DEFAULT_GITHUB_MODEL
+
+
 def _omit_temperature_for_github_model(model: str) -> bool:
     """OpenAI GPT-5 reasoning models reject explicit ``temperature``; the API returns 400."""
     m = model.strip().lower()
@@ -126,6 +139,7 @@ def chat_completion(
     token: str,
     user_content: str,
     model: str | None = None,
+    config: RepoConfig | None = None,
     temperature: float = LLM_RUNTIME.DEFAULT_TEMPERATURE,
 ) -> str:
     """Return assistant message content string (may be JSON).
@@ -133,7 +147,7 @@ def chat_completion(
     Retries automatically on 429 (rate-limit) with exponential backoff,
     respecting the ``Retry-After`` header when present.
     """
-    m = model or os.environ.get("GITHUB_MODEL", LLM_RUNTIME.DEFAULT_GITHUB_MODEL)
+    m = resolve_model(model=model, config=config)
     payload: dict[str, Any] = {
         "model": m,
         "messages": [
@@ -188,25 +202,41 @@ def chat_completion(
     return content
 
 
-def generate_post_json(*, token: str, topic_title: str, strict_retry: bool = False) -> dict[str, Any]:
+def generate_post_json(
+    *,
+    token: str,
+    topic_title: str,
+    strict_retry: bool = False,
+    config: RepoConfig | None = None,
+) -> dict[str, Any]:
     """Call model and return parsed JSON dict; raises on HTTP/parse errors."""
     user = LLM_PROMPTS.USER_PROMPT_TEMPLATE.format(topic_title=topic_title)
     if strict_retry:
         user += LLM_RUNTIME.STRICT_RETRY_SUFFIX
-    return _generate_post_json_with_user_prompt(token=token, user_content=user, strict_retry=strict_retry)
+    return _generate_post_json_with_user_prompt(
+        token=token, user_content=user, strict_retry=strict_retry, config=config
+    )
 
 
-def _generate_post_json_with_user_prompt(*, token: str, user_content: str, strict_retry: bool) -> dict[str, Any]:
+def _generate_post_json_with_user_prompt(
+    *, token: str, user_content: str, strict_retry: bool, config: RepoConfig | None
+) -> dict[str, Any]:
     raw = chat_completion(
         token=token,
         user_content=user_content,
+        config=config,
         temperature=LLM_RUNTIME.STRICT_RETRY_TEMPERATURE if strict_retry else LLM_RUNTIME.DEFAULT_TEMPERATURE,
     )
     return extract_json_object(raw)
 
 
 def generate_post_json_with_feedback(
-    *, token: str, topic_title: str, feedback: str | None, strict_retry: bool = True
+    *,
+    token: str,
+    topic_title: str,
+    feedback: str | None,
+    strict_retry: bool = True,
+    config: RepoConfig | None = None,
 ) -> dict[str, Any]:
     """Call model with optional validator feedback to improve compliance."""
     user = LLM_PROMPTS.USER_PROMPT_TEMPLATE.format(topic_title=topic_title)
@@ -214,5 +244,7 @@ def generate_post_json_with_feedback(
         user += LLM_RUNTIME.STRICT_RETRY_SUFFIX
     if feedback:
         user += f"{LLM_RUNTIME.VALIDATION_FEEDBACK_PREFIX}- {feedback}\n"
-    return _generate_post_json_with_user_prompt(token=token, user_content=user, strict_retry=strict_retry)
+    return _generate_post_json_with_user_prompt(
+        token=token, user_content=user, strict_retry=strict_retry, config=config
+    )
 

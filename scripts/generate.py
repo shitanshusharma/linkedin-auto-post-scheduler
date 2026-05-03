@@ -5,7 +5,7 @@ Env:
   GITHUB_TOKEN — GitHub Models (models:read); set automatically in Actions
   TELEGRAM_POST_BOT_TOKEN, TELEGRAM_CHAT_ID
   TELEGRAM_LOG_BOT_TOKEN, TELEGRAM_LOG_CHAT_ID — optional Log Bot
-  GITHUB_MODEL — optional, default openai/gpt-4.1-mini
+  GITHUB_MODEL — optional, default openai/gpt-4o-mini
   WF_ACTION — generate | resend
   WF_POST_ID — required for resend
 """
@@ -61,7 +61,7 @@ def _draft_message(topic: str, composed: str, risk_flags: list[str]) -> str:
     )
 
 
-def _run_llm(topic_title: str) -> LlmPostOutput | None:
+def _run_llm(topic_title: str, config: RepoConfig) -> LlmPostOutput | None:
     token = os.environ.get("GITHUB_TOKEN", "").strip()
     if not token:
         return None
@@ -77,9 +77,12 @@ def _run_llm(topic_title: str) -> LlmPostOutput | None:
                     topic_title=topic_title,
                     feedback=feedback,
                     strict_retry=True,
+                    config=config,
                 )
             else:
-                data = generate_post_json(token=token, topic_title=topic_title, strict_retry=strict)
+                data = generate_post_json(
+                    token=token, topic_title=topic_title, strict_retry=strict, config=config
+                )
             output = LlmPostOutput.model_validate(data)
             alignment_err = check_topic_alignment(output, topic_title)
             if alignment_err:
@@ -228,9 +231,6 @@ def main() -> int:
         LOGGER.info("Skip: generation is disabled by config")
         return 0
 
-    if config.default_github_model and not os.environ.get("GITHUB_MODEL", "").strip():
-        os.environ["GITHUB_MODEL"] = config.default_github_model
-
     if config.single_active_post:
         for p in posts:
             if p.status in ACTIVE_POST_STATUSES.ALL:
@@ -280,7 +280,7 @@ def main() -> int:
         LOGGER.error(ERROR_MESSAGES.GITHUB_TOKEN_REQUIRED)
         return 1
 
-    llm = _run_llm(topic_title)
+    llm = _run_llm(topic_title, config)
     if llm is None:
         return 0
 
