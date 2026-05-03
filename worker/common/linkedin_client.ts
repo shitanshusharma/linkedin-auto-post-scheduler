@@ -6,6 +6,7 @@ export interface PublishResult {
   ok: boolean;
   linkedinPostId?: string;
   error: string;
+  detail?: string;
 }
 
 function sanitizeForLinkedIn(value: string): string {
@@ -68,11 +69,23 @@ export async function publishToLinkedIn(env: Env, composedText: string): Promise
     return { ok: true, linkedinPostId, error: "" };
   }
   if (response.status === 401) {
-    return { ok: false, error: ERROR_CODES.LINKEDIN_REAUTH_REQUIRED };
+    return {
+      ok: false,
+      error: ERROR_CODES.LINKEDIN_REAUTH_REQUIRED,
+      detail: bodyText.slice(0, 500),
+    };
   }
   if (response.status === 429) {
-    return { ok: false, error: ERROR_CODES.LINKEDIN_RATE_LIMITED };
+    return {
+      ok: false,
+      error: ERROR_CODES.LINKEDIN_RATE_LIMITED,
+      detail: bodyText.slice(0, 500),
+    };
   }
-  return { ok: false, error: `linkedin_status_${response.status}: ${bodyText.slice(0, 500)}` };
+  return {
+    ok: false,
+    error: `linkedin_status_${response.status}`,
+    detail: bodyText.slice(0, 500),
+  };
 }
 

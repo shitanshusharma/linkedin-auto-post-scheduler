@@ -13,6 +13,7 @@ import {
   ERROR_CODES,
   IDEMPOTENCY_TTL_SECONDS,
   MAX_TELEGRAM_POST_LENGTH,
+  MAX_WEBHOOK_BODY_BYTES,
   POST_STATUSES,
   RATE_LIMIT_MAX_REQUESTS_PER_MINUTE,
   RESPONSE_MESSAGES,
@@ -36,7 +37,7 @@ import {
   sendPostBotMessage,
 } from "../common/telegram_client";
 import { Env, JsonObject, TelegramCallbackQuery, TelegramMessage, TelegramUpdate } from "../common/types";
-import { asNumber, asString } from "../common/utils";
+import { asNumber, asString, timingSafeEqualString } from "../common/utils";
 
 function statusOf(post: JsonObject): string {
   return asString(post.status) ?? "";
@@ -376,14 +377,27 @@ export default {
     }
 
     const secret = request.headers.get("x-telegram-bot-api-secret-token") ?? "";
-    if (!env.TELEGRAM_WEBHOOK_SECRET || secret !== env.TELEGRAM_WEBHOOK_SECRET) {
+    if (!env.TELEGRAM_WEBHOOK_SECRET || !timingSafeEqualString(secret, env.TELEGRAM_WEBHOOK_SECRET)) {
       await logEvent(env, "webhook_security_violation reason=bad_secret");
       return new Response(RESPONSE_MESSAGES.HTTP_UNAUTHORIZED, { status: 401 });
     }
 
+    const declaredLength = Number.parseInt(request.headers.get("content-length") ?? "", 10);
+    if (Number.isFinite(declaredLength) && declaredLength > MAX_WEBHOOK_BODY_BYTES) {
+      await logEvent(env, `webhook_payload_rejected reason=content_length size=${declaredLength}`);
+      return new Response(RESPONSE_MESSAGES.HTTP_PAYLOAD_TOO_LARGE, { status: 413 });
+    }
+
+    const bodyText = await request.text();
+    const bodyBytes = new TextEncoder().encode(bodyText).length;
+    if (bodyBytes > MAX_WEBHOOK_BODY_BYTES) {
+      await logEvent(env, `webhook_payload_rejected reason=body_size size=${bodyBytes}`);
+      return new Response(RESPONSE_MESSAGES.HTTP_PAYLOAD_TOO_LARGE, { status: 413 });
+    }
+
     let update: TelegramUpdate;
     try {
-      update = (await request.json()) as TelegramUpdate;
+      update = JSON.parse(bodyText) as TelegramUpdate;
     } catch {
       await logEvent(env, "webhook_invalid_action reason=invalid_json");
       return new Response(RESPONSE_MESSAGES.HTTP_BAD_REQUEST, { status: 400 });

@@ -6,6 +6,7 @@ export const MAX_TELEGRAM_POST_LENGTH = 2000;
 export const RATE_LIMIT_MAX_REQUESTS_PER_MINUTE = 20;
 export const IDEMPOTENCY_TTL_SECONDS = 60 * 60 * 24;
 export const CALLBACK_DATA_MAX_BYTES = 64;
+export const MAX_WEBHOOK_BODY_BYTES = 64 * 1024;
 export const LINKEDIN_VERSION = "202603";
 export const WORKER_SYNC_PR_TITLE = "chore(worker): sync automation state";
 export const WORKER_SYNC_PR_BODY = "Automated PR for Worker state updates (`posts.json`).";
@@ -56,6 +57,7 @@ export const RESPONSE_MESSAGES = {
   HTTP_NOT_FOUND: "Not found",
   HTTP_UNAUTHORIZED: "Unauthorized",
   HTTP_BAD_REQUEST: "Bad Request",
+  HTTP_PAYLOAD_TOO_LARGE: "Payload Too Large",
   HTTP_INTERNAL_SERVER_ERROR: "Internal Server Error",
 } as const;
 

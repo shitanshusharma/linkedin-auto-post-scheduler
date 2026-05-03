@@ -29,3 +29,16 @@ export function decodeBase64Utf8(value: string): string {
   return new TextDecoder().decode(bytes);
 }
 
+export function timingSafeEqualString(a: string, b: string): boolean {
+  const enc = new TextEncoder();
+  const ab = enc.encode(a);
+  const bb = enc.encode(b);
+  // Always XOR over max length so total ops don't depend on which input is shorter.
+  const len = Math.max(ab.length, bb.length);
+  let diff = ab.length ^ bb.length;
+  for (let i = 0; i < len; i += 1) {
+    diff |= (ab[i] ?? 0) ^ (bb[i] ?? 0);
+  }
+  return diff === 0;
+}
+

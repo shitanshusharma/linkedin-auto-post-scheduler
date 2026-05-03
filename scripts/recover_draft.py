@@ -23,9 +23,12 @@ _SCRIPT_DIR = Path(__file__).resolve().parent
 if str(_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR))
 
+from pydantic import ValidationError
+
 from common.paths import repo_root
 from common.repo_json import read_json, write_json
 from core.constants import ACTIVE_POST_STATUSES
+from core.llm_output import LlmPostOutput, validation_error_message
 from core.post_record import PostRecord, build_post
 from integrations.git_push import commit_and_push, should_auto_push
 
@@ -107,6 +110,14 @@ def main() -> int:
 
     if not post_id or not topic_title:
         print("post_id and topic are required", file=sys.stderr)
+        return 1
+
+    try:
+        LlmPostOutput.model_validate(
+            {"hook": hook, "body": body, "cta": cta, "risk_flags": risk_flags}
+        )
+    except ValidationError as exc:
+        print(f"content validation failed: {validation_error_message(exc)}", file=sys.stderr)
         return 1
 
     raw_posts = read_json(posts_path)

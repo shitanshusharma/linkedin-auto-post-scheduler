@@ -125,11 +125,17 @@ def _response_body_preview(r: requests.Response) -> str:
     return text
 
 
-def _raise_inference_http_error(r: requests.Response) -> None:
+def _raise_inference_http_error(r: requests.Response, *, model: str) -> None:
     """Raise HTTPError including provider JSON body (``raise_for_status`` omits it)."""
     preview = _response_body_preview(r)
     base = f"{r.status_code} {r.reason} for {r.url}"
-    message = f"{base} | {preview}" if preview else base
+    body_part = preview if preview else "<empty body>"
+    request_id = (
+        r.headers.get("x-github-request-id")
+        or r.headers.get("x-request-id")
+        or "<missing>"
+    )
+    message = f"{base} | model={model} | request_id={request_id} | body={body_part}"
     _logger.error("GitHub Models request failed: %s", message)
     raise requests.HTTPError(message, response=r)
 
@@ -169,7 +175,7 @@ def chat_completion(
         if r.status_code != 429:
             if r.ok:
                 break
-            _raise_inference_http_error(r)
+            _raise_inference_http_error(r, model=m)
 
         last_exc = requests.HTTPError(response=r)
         if attempt >= LLM_RUNTIME.RATE_LIMIT_MAX_RETRIES:

@@ -107,7 +107,8 @@ async function runPublishFlow(env: Env, postId: string): Promise<void> {
   const retryMarkup = inlineRetry(postId, approvalToken);
   const msgId = await sendPostBotMessage(env, text, retryMarkup);
   await setPostMessageId(env, postId, msgId);
-  await logEvent(env, `publish_failed post_id=${postId} error=${publish.error}`);
+  const detailSuffix = publish.detail ? ` detail=${publish.detail}` : "";
+  await logEvent(env, `publish_failed post_id=${postId} error=${publish.error}${detailSuffix}`);
 }
 
 interface HandlerContext {
