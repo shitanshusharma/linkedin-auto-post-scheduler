@@ -82,5 +82,26 @@
     "posted_at": null,
     "linkedin_post_id": null,
     "error": "expired_after_48h"
+  },
+  {
+    "id": "post_2026_05_11_001",
+    "topic": "How Discord Handles Millions of Concurrent WebSocket Connections",
+    "status": "pending",
+    "approval_token": "6be4bd30c59a9c9f",
+    "telegram_message_id": 31,
+    "content": {
+      "hook": "Handling millions of WebSocket connections is a challenge; here's how Discord manages this effectively.",
+      "body": "Discord utilizes a highly optimized architecture to maintain millions of concurrent WebSocket connections.\n\nEach connection is monitored through a control loop that continuously checks for incoming signals, such as user messages or presence updates. Discord employs a sharding strategy, where the user base is divided into smaller segments, allowing each shard to handle a manageable number of connections.\n\nExample: A shard might manage 10,000 connections, processing events like message sends or presence updates. When a message is sent, the shard receives the input signal, processes it, and then triggers an outbound signal to the relevant users connected to that shard.\n\n[Incoming signals] -> [Process in shard] -> [Outgoing signals]\n\nThis architecture minimizes latency and optimizes resource allocation, ensuring that each user experiences real-time communication without bottlenecks.",
+      "cta": "Implementing a sharding strategy can significantly enhance the scalability of your WebSocket applications."
+    },
+    "composed_text": "Handling millions of WebSocket connections is a challenge; here's how Discord manages this effectively.\n\nDiscord utilizes a highly optimized architecture to maintain millions of concurrent WebSocket connections.\n\nEach connection is monitored through a control loop that continuously checks for incoming signals, such as user messages or presence updates. Discord employs a sharding strategy, where the user base is divided into smaller segments, allowing each shard to handle a manageable number of connections.\n\nExample: A shard might manage 10,000 connections, processing events like message sends or presence updates. When a message is sent, the shard receives the input signal, processes it, and then triggers an outbound signal to the relevant users connected to that shard.\n\n[Incoming signals] -> [Process in shard] -> [Outgoing signals]\n\nThis architecture minimizes latency and optimizes resource allocation, ensuring that each user experiences real-time communication without bottlenecks.\n\nImplementing a sharding strategy can significantly enhance the scalability of your WebSocket applications.",
+    "risk_flags": [],
+    "proposed_edit": null,
+    "publish_attempted_at": null,
+    "created_at": "2026-05-11T09:47:08Z",
+    "approved_at": null,
+    "posted_at": null,
+    "linkedin_post_id": null,
+    "error": null
   }
 ]
