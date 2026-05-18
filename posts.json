@@ -103,5 +103,26 @@
     "posted_at": null,
     "linkedin_post_id": null,
     "error": "expired_after_48h"
+  },
+  {
+    "id": "post_2026_05_18_001",
+    "topic": "How GitHub's Code Search Indexes Billions of Lines Using Trigram Indexing",
+    "status": "pending",
+    "approval_token": "9c5eaf72014cb857",
+    "telegram_message_id": 36,
+    "content": {
+      "hook": "Optimizing code search with trigram indexing boosts efficiency in GitHub's vast repository.",
+      "body": "GitHub's code search employs trigram indexing to efficiently manage billions of lines of code.\n\nThis mechanism breaks down code into overlapping triplets of characters, enabling rapid pattern matching. When a search query is issued, the system generates trigrams from the input and checks against the indexed trigrams in real time.\n\nExample: A search for the term \"def\" produces trigrams such as \"def\", \"ef \", and \"f \". The search engine then locates all occurrences in the index, yielding results almost instantly.\n\n[Input query] -> [Generate trigrams] -> [Search index]\n\nThis approach minimizes latency and maximizes retrieval speed, essential for developers navigating extensive codebases.",
+      "cta": "Implementing trigram indexing can significantly enhance search capabilities in large repositories."
+    },
+    "composed_text": "Optimizing code search with trigram indexing boosts efficiency in GitHub's vast repository.\n\nGitHub's code search employs trigram indexing to efficiently manage billions of lines of code.\n\nThis mechanism breaks down code into overlapping triplets of characters, enabling rapid pattern matching. When a search query is issued, the system generates trigrams from the input and checks against the indexed trigrams in real time.\n\nExample: A search for the term \"def\" produces trigrams such as \"def\", \"ef \", and \"f \". The search engine then locates all occurrences in the index, yielding results almost instantly.\n\n[Input query] -> [Generate trigrams] -> [Search index]\n\nThis approach minimizes latency and maximizes retrieval speed, essential for developers navigating extensive codebases.\n\nImplementing trigram indexing can significantly enhance search capabilities in large repositories.",
+    "risk_flags": [],
+    "proposed_edit": null,
+    "publish_attempted_at": null,
+    "created_at": "2026-05-18T10:12:16Z",
+    "approved_at": null,
+    "posted_at": null,
+    "linkedin_post_id": null,
+    "error": null
   }
 ]

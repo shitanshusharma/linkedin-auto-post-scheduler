@@ -27,7 +27,7 @@
   {
     "id": "topic_006",
     "title": "How GitHub's Code Search Indexes Billions of Lines Using Trigram Indexing",
-    "used": false
+    "used": true
   },
   {
     "id": "topic_007",
