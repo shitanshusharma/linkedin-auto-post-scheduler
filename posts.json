@@ -124,5 +124,26 @@
     "posted_at": null,
     "linkedin_post_id": null,
     "error": "expired_after_48h"
+  },
+  {
+    "id": "post_2026_05_25_001",
+    "topic": "How Stripe's Idempotency Keys Prevent Duplicate Payment Processing",
+    "status": "pending",
+    "approval_token": "833c5160c02f9bc4",
+    "telegram_message_id": 41,
+    "content": {
+      "hook": "Idempotency keys are crucial for ensuring payment integrity in systems like Stripe.",
+      "body": "Idempotency keys help prevent duplicate payment processing by ensuring that identical requests yield the same result.\n\nWhen a payment request is initiated, the system generates a unique idempotency key. This key is sent along with the request to the payment processor. If the same request is sent again (due to network issues or user retries), the processor identifies the key and avoids reprocessing the payment.\n\nExample: A user tries to pay $50, but the request times out. Upon retrying, the same idempotency key is used, and the payment processor recognizes it, returning the original response instead of charging the user again.\n\n[Payment request] -> [Generate idempotency key] -> [Check for duplicates]\n\nThis approach minimizes errors and enhances user experience by ensuring that payments are processed exactly once, maintaining trust in the payment system.",
+      "cta": "Implementing idempotency keys is essential for any payment system to ensure reliability and user satisfaction."
+    },
+    "composed_text": "Idempotency keys are crucial for ensuring payment integrity in systems like Stripe.\n\nIdempotency keys help prevent duplicate payment processing by ensuring that identical requests yield the same result.\n\nWhen a payment request is initiated, the system generates a unique idempotency key. This key is sent along with the request to the payment processor. If the same request is sent again (due to network issues or user retries), the processor identifies the key and avoids reprocessing the payment.\n\nExample: A user tries to pay $50, but the request times out. Upon retrying, the same idempotency key is used, and the payment processor recognizes it, returning the original response instead of charging the user again.\n\n[Payment request] -> [Generate idempotency key] -> [Check for duplicates]\n\nThis approach minimizes errors and enhances user experience by ensuring that payments are processed exactly once, maintaining trust in the payment system.\n\nImplementing idempotency keys is essential for any payment system to ensure reliability and user satisfaction.",
+    "risk_flags": [],
+    "proposed_edit": null,
+    "publish_attempted_at": null,
+    "created_at": "2026-05-25T10:16:19Z",
+    "approved_at": null,
+    "posted_at": null,
+    "linkedin_post_id": null,
+    "error": null
   }
 ]
