@@ -128,7 +128,7 @@
   {
     "id": "post_2026_05_25_001",
     "topic": "How Stripe's Idempotency Keys Prevent Duplicate Payment Processing",
-    "status": "pending",
+    "status": "expired",
     "approval_token": "833c5160c02f9bc4",
     "telegram_message_id": 41,
     "content": {
@@ -144,6 +144,6 @@
     "approved_at": null,
     "posted_at": null,
     "linkedin_post_id": null,
-    "error": null
+    "error": "expired_after_48h"
   }
 ]
