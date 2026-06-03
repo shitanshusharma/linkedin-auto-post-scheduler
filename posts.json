@@ -149,7 +149,7 @@
   {
     "id": "post_2026_06_01_001",
     "topic": "How Apple's Find My Network Locates Offline Devices Without Leaking Their Position",
-    "status": "pending",
+    "status": "expired",
     "approval_token": "bb40095c2b57f0ac",
     "telegram_message_id": 45,
     "content": {
@@ -165,6 +165,6 @@
     "approved_at": null,
     "posted_at": null,
     "linkedin_post_id": null,
-    "error": null
+    "error": "expired_after_48h"
   }
 ]
