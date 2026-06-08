@@ -42,7 +42,7 @@
   {
     "id": "topic_009",
     "title": "How CockroachDB Achieves Globally Consistent Transactions with Hybrid Logical Clocks",
-    "used": false
+    "used": true
   },
   {
     "id": "topic_010",
