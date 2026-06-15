@@ -187,5 +187,26 @@
     "posted_at": null,
     "linkedin_post_id": null,
     "error": "expired_after_48h"
+  },
+  {
+    "id": "post_2026_06_15_001",
+    "topic": "How Figma's Multiplayer Sync Uses CRDTs to Resolve Concurrent Edits",
+    "status": "pending",
+    "approval_token": "47964d30aba30e5b",
+    "telegram_message_id": 54,
+    "content": {
+      "hook": "Figma's multiplayer sync uses CRDTs to manage concurrent edits effectively.",
+      "body": "Conflict-free Replicated Data Types (CRDTs) allow multiple users to edit a design simultaneously without version conflicts.\n\nWhen a user makes an edit, a signal is generated that includes the action type and the relevant state. This signal is then sent to all other clients.\n\nExample: If User A moves a shape while User B changes its color, both actions are captured as distinct signals and processed concurrently, ensuring all users see the final state without conflicts.\n\n[User edit] -> [Generate signal] -> [Broadcast to clients]\n\nIn practice, this approach minimizes latency in collaborative environments, providing a seamless user experience and ensuring consistent design updates across all users.",
+      "cta": "Implementing CRDTs can enhance real-time collaboration in your applications."
+    },
+    "composed_text": "Figma's multiplayer sync uses CRDTs to manage concurrent edits effectively.\n\nConflict-free Replicated Data Types (CRDTs) allow multiple users to edit a design simultaneously without version conflicts.\n\nWhen a user makes an edit, a signal is generated that includes the action type and the relevant state. This signal is then sent to all other clients.\n\nExample: If User A moves a shape while User B changes its color, both actions are captured as distinct signals and processed concurrently, ensuring all users see the final state without conflicts.\n\n[User edit] -> [Generate signal] -> [Broadcast to clients]\n\nIn practice, this approach minimizes latency in collaborative environments, providing a seamless user experience and ensuring consistent design updates across all users.\n\nImplementing CRDTs can enhance real-time collaboration in your applications.",
+    "risk_flags": [],
+    "proposed_edit": null,
+    "publish_attempted_at": null,
+    "created_at": "2026-06-15T12:22:37Z",
+    "approved_at": null,
+    "posted_at": null,
+    "linkedin_post_id": null,
+    "error": null
   }
 ]

@@ -47,7 +47,7 @@
   {
     "id": "topic_010",
     "title": "How Figma's Multiplayer Sync Uses CRDTs to Resolve Concurrent Edits",
-    "used": false
+    "used": true
   },
   {
     "id": "topic_011",
