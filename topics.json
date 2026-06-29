@@ -57,7 +57,7 @@
   {
     "id": "topic_012",
     "title": "How AWS S3 Achieves Eleven 9s of Durability with Erasure Coding",
-    "used": false
+    "used": true
   },
   {
     "id": "topic_013",

@@ -229,5 +229,26 @@
     "posted_at": null,
     "linkedin_post_id": null,
     "error": "expired_after_48h"
+  },
+  {
+    "id": "post_2026_06_29_001",
+    "topic": "How AWS S3 Achieves Eleven 9s of Durability with Erasure Coding",
+    "status": "pending",
+    "approval_token": "0a6c9b5c0e67dd6f",
+    "telegram_message_id": 62,
+    "content": {
+      "hook": "How does AWS S3 achieve eleven 9s of durability?",
+      "body": "AWS S3 employs erasure coding to ensure data durability and fault tolerance across multiple servers.\n\nThe system divides data into fragments, adds redundant pieces, and distributes them across various physical locations. Each fragment is encoded and stored such that any subset of fragments can reconstruct the original data.\n\nExample: If a file is split into 10 fragments with 4 parity fragments, even if 4 of the fragments are lost, the original data can still be recovered from the remaining fragments.\n\n[Data divided] -> [Redundant fragments added] -> [Distributed storage]\n\nThis method minimizes data loss and maximizes availability, effectively achieving eleven 9s of durability in practice.",
+      "cta": "Implementing erasure coding can significantly enhance your data storage reliability."
+    },
+    "composed_text": "How does AWS S3 achieve eleven 9s of durability?\n\nAWS S3 employs erasure coding to ensure data durability and fault tolerance across multiple servers.\n\nThe system divides data into fragments, adds redundant pieces, and distributes them across various physical locations. Each fragment is encoded and stored such that any subset of fragments can reconstruct the original data.\n\nExample: If a file is split into 10 fragments with 4 parity fragments, even if 4 of the fragments are lost, the original data can still be recovered from the remaining fragments.\n\n[Data divided] -> [Redundant fragments added] -> [Distributed storage]\n\nThis method minimizes data loss and maximizes availability, effectively achieving eleven 9s of durability in practice.\n\nImplementing erasure coding can significantly enhance your data storage reliability.",
+    "risk_flags": [],
+    "proposed_edit": null,
+    "publish_attempted_at": null,
+    "created_at": "2026-06-29T11:06:42Z",
+    "approved_at": null,
+    "posted_at": null,
+    "linkedin_post_id": null,
+    "error": null
   }
 ]
