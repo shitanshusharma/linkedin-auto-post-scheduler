@@ -250,5 +250,26 @@
     "posted_at": null,
     "linkedin_post_id": null,
     "error": "expired_after_48h"
+  },
+  {
+    "id": "post_2026_07_06_001",
+    "topic": "How TikTok's For You Page Ranks Content Using a Two-Stage Retrieval Pipeline",
+    "status": "pending",
+    "approval_token": "38ed34ac0b19e01c",
+    "telegram_message_id": 66,
+    "content": {
+      "hook": "Understanding TikTok's content ranking reveals the mechanics behind user engagement.",
+      "body": "TikTok's For You Page employs a two-stage retrieval pipeline to optimize content delivery.\n\nIn the first stage, the system gathers signals from user interactions, such as likes, shares, and watch time. It ranks videos based on these signals against a set of thresholds, filtering out less relevant content.\n\nIn the second stage, the algorithm applies a more nuanced ranking based on additional factors like user demographics and device type, refining the selection further.\n\nExample: A user frequently engages with dance videos; the system prioritizes similar content, ensuring higher relevance based on observed behavior.\n\n[User signals] -> [Initial ranking] -> [Refined content]\n\nThis approach allows TikTok to maintain low latency in content delivery while optimizing user engagement.",
+      "cta": "Implementing similar multi-stage retrieval methods can enhance content relevance in your applications."
+    },
+    "composed_text": "Understanding TikTok's content ranking reveals the mechanics behind user engagement.\n\nTikTok's For You Page employs a two-stage retrieval pipeline to optimize content delivery.\n\nIn the first stage, the system gathers signals from user interactions, such as likes, shares, and watch time. It ranks videos based on these signals against a set of thresholds, filtering out less relevant content.\n\nIn the second stage, the algorithm applies a more nuanced ranking based on additional factors like user demographics and device type, refining the selection further.\n\nExample: A user frequently engages with dance videos; the system prioritizes similar content, ensuring higher relevance based on observed behavior.\n\n[User signals] -> [Initial ranking] -> [Refined content]\n\nThis approach allows TikTok to maintain low latency in content delivery while optimizing user engagement.\n\nImplementing similar multi-stage retrieval methods can enhance content relevance in your applications.",
+    "risk_flags": [],
+    "proposed_edit": null,
+    "publish_attempted_at": null,
+    "created_at": "2026-07-06T10:43:11Z",
+    "approved_at": null,
+    "posted_at": null,
+    "linkedin_post_id": null,
+    "error": null
   }
 ]
