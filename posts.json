@@ -271,5 +271,26 @@
     "posted_at": null,
     "linkedin_post_id": null,
     "error": "expired_after_48h"
+  },
+  {
+    "id": "post_2026_07_13_001",
+    "topic": "How YouTube Handles 500 Hours of Video Upload Per Minute with Adaptive Encoding",
+    "status": "pending",
+    "approval_token": "dc73f73d7de2cb99",
+    "telegram_message_id": 70,
+    "content": {
+      "hook": "YouTube's adaptive encoding maximizes video quality while managing massive uploads efficiently.",
+      "body": "YouTube employs adaptive encoding to handle 500 hours of video uploaded every minute. This process optimizes video quality based on available bandwidth and device capabilities.\n\nWhen a video is uploaded, the system analyzes the input signal (video resolution, bitrate). It then encodes multiple versions of the video at different quality levels.\n\nExample: A 4K video may be encoded into 1080p, 720p, and 480p versions, allowing users to stream based on their connection speed.\n\n[Input signal] -> [Analyze quality] -> [Encode multiple versions]\n\nThis approach reduces latency during playback, ensuring a smooth viewing experience across various devices and network conditions.",
+      "cta": "Implementing adaptive encoding can significantly enhance user experience in your applications."
+    },
+    "composed_text": "YouTube's adaptive encoding maximizes video quality while managing massive uploads efficiently.\n\nYouTube employs adaptive encoding to handle 500 hours of video uploaded every minute. This process optimizes video quality based on available bandwidth and device capabilities.\n\nWhen a video is uploaded, the system analyzes the input signal (video resolution, bitrate). It then encodes multiple versions of the video at different quality levels.\n\nExample: A 4K video may be encoded into 1080p, 720p, and 480p versions, allowing users to stream based on their connection speed.\n\n[Input signal] -> [Analyze quality] -> [Encode multiple versions]\n\nThis approach reduces latency during playback, ensuring a smooth viewing experience across various devices and network conditions.\n\nImplementing adaptive encoding can significantly enhance user experience in your applications.",
+    "risk_flags": [],
+    "proposed_edit": null,
+    "publish_attempted_at": null,
+    "created_at": "2026-07-13T09:33:21Z",
+    "approved_at": null,
+    "posted_at": null,
+    "linkedin_post_id": null,
+    "error": null
   }
 ]
