@@ -275,7 +275,7 @@
   {
     "id": "post_2026_07_13_001",
     "topic": "How YouTube Handles 500 Hours of Video Upload Per Minute with Adaptive Encoding",
-    "status": "pending",
+    "status": "expired",
     "approval_token": "dc73f73d7de2cb99",
     "telegram_message_id": 70,
     "content": {
@@ -291,6 +291,6 @@
     "approved_at": null,
     "posted_at": null,
     "linkedin_post_id": null,
-    "error": null
+    "error": "expired_after_48h"
   }
 ]
