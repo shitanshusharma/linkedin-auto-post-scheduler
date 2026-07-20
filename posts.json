@@ -292,5 +292,26 @@
     "posted_at": null,
     "linkedin_post_id": null,
     "error": "expired_after_48h"
+  },
+  {
+    "id": "post_2026_07_20_001",
+    "topic": "How LinkedIn's People You May Know Uses Graph Neural Networks",
+    "status": "pending",
+    "approval_token": "d43e255549b3f9a5",
+    "telegram_message_id": 74,
+    "content": {
+      "hook": "Graph neural networks enhance LinkedIn's People You May Know feature by analyzing connections intelligently.",
+      "body": "Graph neural networks (GNNs) model relationships among users to suggest potential connections.\n\nThe system takes user data (existing connections, profile attributes, and interactions) as input signals. It processes these signals through multiple layers, capturing complex relationships in the graph structure.\n\nExample: If User A is connected to Users B and C, and both B and C share mutual connections with User D, the GNN may suggest User D to User A based on their network dynamics.\n\n[User data] -> [Process connections] -> [Suggest connections]\n\nThis approach optimizes the relevance of suggestions by leveraging rich relational data, improving user engagement and network expansion.",
+      "cta": "Utilizing graph neural networks creates more meaningful connections in professional networks."
+    },
+    "composed_text": "Graph neural networks enhance LinkedIn's People You May Know feature by analyzing connections intelligently.\n\nGraph neural networks (GNNs) model relationships among users to suggest potential connections.\n\nThe system takes user data (existing connections, profile attributes, and interactions) as input signals. It processes these signals through multiple layers, capturing complex relationships in the graph structure.\n\nExample: If User A is connected to Users B and C, and both B and C share mutual connections with User D, the GNN may suggest User D to User A based on their network dynamics.\n\n[User data] -> [Process connections] -> [Suggest connections]\n\nThis approach optimizes the relevance of suggestions by leveraging rich relational data, improving user engagement and network expansion.\n\nUtilizing graph neural networks creates more meaningful connections in professional networks.",
+    "risk_flags": [],
+    "proposed_edit": null,
+    "publish_attempted_at": null,
+    "created_at": "2026-07-20T09:20:05Z",
+    "approved_at": null,
+    "posted_at": null,
+    "linkedin_post_id": null,
+    "error": null
   }
 ]
