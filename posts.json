@@ -313,5 +313,30 @@
     "posted_at": null,
     "linkedin_post_id": null,
     "error": "expired_after_48h"
+  },
+  {
+    "id": "post_2026_07_27_001",
+    "topic": "How Cloudflare's Anycast Routing Absorbs DDoS Traffic at the Edge",
+    "status": "pending",
+    "approval_token": "a7441408f7cceba1",
+    "telegram_message_id": 78,
+    "content": {
+      "hook": "Cloudflare's Anycast routing effectively mitigates DDoS attacks by distributing traffic across multiple edge locations.",
+      "body": "Anycast routing allows multiple servers to share the same IP address. When a user accesses a service, their request is directed to the nearest edge server based on network proximity.\n\nThis mechanism leverages global routing tables to optimize traffic allocation. As DDoS traffic floods in, the system evaluates incoming signals from various locations and reroutes them to less congested servers, maintaining performance.\n\nExample: If a server in New York is overwhelmed with 10 Gbps of malicious traffic, the Anycast system redistributes requests to edge servers in Los Angeles and Chicago, effectively balancing the load.\n\n[User request] -> [Route to nearest server] -> [Distribute load]\n\nUsing Anycast helps isolate and absorb DDoS traffic at the edge, protecting the core infrastructure from being overwhelmed.",
+      "cta": "Implementing Anycast routing enhances network resilience against DDoS attacks, ensuring availability and performance."
+    },
+    "composed_text": "Cloudflare's Anycast routing effectively mitigates DDoS attacks by distributing traffic across multiple edge locations.\n\nAnycast routing allows multiple servers to share the same IP address. When a user accesses a service, their request is directed to the nearest edge server based on network proximity.\n\nThis mechanism leverages global routing tables to optimize traffic allocation. As DDoS traffic floods in, the system evaluates incoming signals from various locations and reroutes them to less congested servers, maintaining performance.\n\nExample: If a server in New York is overwhelmed with 10 Gbps of malicious traffic, the Anycast system redistributes requests to edge servers in Los Angeles and Chicago, effectively balancing the load.\n\n[User request] -> [Route to nearest server] -> [Distribute load]\n\nUsing Anycast helps isolate and absorb DDoS traffic at the edge, protecting the core infrastructure from being overwhelmed.\n\nImplementing Anycast routing enhances network resilience against DDoS attacks, ensuring availability and performance.",
+    "risk_flags": [
+      "Avoids proprietary claims",
+      "Ensures clarity on technical mechanics",
+      "Maintains a focus on established practices"
+    ],
+    "proposed_edit": null,
+    "publish_attempted_at": null,
+    "created_at": "2026-07-27T09:56:51Z",
+    "approved_at": null,
+    "posted_at": null,
+    "linkedin_post_id": null,
+    "error": null
   }
 ]
