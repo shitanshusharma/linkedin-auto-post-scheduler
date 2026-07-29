@@ -61,5 +61,282 @@
     "posted_at": "2026-04-22T21:09:31.523Z",
     "linkedin_post_id": null,
     "error": null
+  },
+  {
+    "id": "post_2026_05_03_001",
+    "topic": "How Google Maps Computes Real-Time Traffic from Anonymized GPS Probe Data",
+    "status": "expired",
+    "approval_token": "4afd3946fc26130d",
+    "telegram_message_id": 27,
+    "content": {
+      "hook": "Ever wondered how Google Maps predicts real-time traffic conditions?",
+      "body": "Google Maps leverages anonymized GPS probe data to assess traffic in real-time.\n\nThe system collects location signals from users' devices, which are then aggregated to determine vehicle density on various road segments.\n\nExample: If 1,000 vehicles are logged traveling through a 5-mile stretch, the system evaluates the average speed against historical data to identify congestion.\n\n[Collect GPS data] -> [Aggregate vehicle density] -> [Analyze speed vs. historical]\n\nThis approach allows for proactive traffic management and accurate ETAs, enhancing the user experience significantly.",
+      "cta": "Utilizing anonymized data can drastically improve traffic prediction accuracy."
+    },
+    "composed_text": "Ever wondered how Google Maps predicts real-time traffic conditions?\n\nGoogle Maps leverages anonymized GPS probe data to assess traffic in real-time.\n\nThe system collects location signals from users' devices, which are then aggregated to determine vehicle density on various road segments.\n\nExample: If 1,000 vehicles are logged traveling through a 5-mile stretch, the system evaluates the average speed against historical data to identify congestion.\n\n[Collect GPS data] -> [Aggregate vehicle density] -> [Analyze speed vs. historical]\n\nThis approach allows for proactive traffic management and accurate ETAs, enhancing the user experience significantly.\n\nUtilizing anonymized data can drastically improve traffic prediction accuracy.",
+    "risk_flags": [],
+    "proposed_edit": null,
+    "publish_attempted_at": null,
+    "created_at": "2026-05-03T12:53:49Z",
+    "approved_at": null,
+    "posted_at": null,
+    "linkedin_post_id": null,
+    "error": "expired_after_48h"
+  },
+  {
+    "id": "post_2026_05_11_001",
+    "topic": "How Discord Handles Millions of Concurrent WebSocket Connections",
+    "status": "expired",
+    "approval_token": "6be4bd30c59a9c9f",
+    "telegram_message_id": 31,
+    "content": {
+      "hook": "Handling millions of WebSocket connections is a challenge; here's how Discord manages this effectively.",
+      "body": "Discord utilizes a highly optimized architecture to maintain millions of concurrent WebSocket connections.\n\nEach connection is monitored through a control loop that continuously checks for incoming signals, such as user messages or presence updates. Discord employs a sharding strategy, where the user base is divided into smaller segments, allowing each shard to handle a manageable number of connections.\n\nExample: A shard might manage 10,000 connections, processing events like message sends or presence updates. When a message is sent, the shard receives the input signal, processes it, and then triggers an outbound signal to the relevant users connected to that shard.\n\n[Incoming signals] -> [Process in shard] -> [Outgoing signals]\n\nThis architecture minimizes latency and optimizes resource allocation, ensuring that each user experiences real-time communication without bottlenecks.",
+      "cta": "Implementing a sharding strategy can significantly enhance the scalability of your WebSocket applications."
+    },
+    "composed_text": "Handling millions of WebSocket connections is a challenge; here's how Discord manages this effectively.\n\nDiscord utilizes a highly optimized architecture to maintain millions of concurrent WebSocket connections.\n\nEach connection is monitored through a control loop that continuously checks for incoming signals, such as user messages or presence updates. Discord employs a sharding strategy, where the user base is divided into smaller segments, allowing each shard to handle a manageable number of connections.\n\nExample: A shard might manage 10,000 connections, processing events like message sends or presence updates. When a message is sent, the shard receives the input signal, processes it, and then triggers an outbound signal to the relevant users connected to that shard.\n\n[Incoming signals] -> [Process in shard] -> [Outgoing signals]\n\nThis architecture minimizes latency and optimizes resource allocation, ensuring that each user experiences real-time communication without bottlenecks.\n\nImplementing a sharding strategy can significantly enhance the scalability of your WebSocket applications.",
+    "risk_flags": [],
+    "proposed_edit": null,
+    "publish_attempted_at": null,
+    "created_at": "2026-05-11T09:47:08Z",
+    "approved_at": null,
+    "posted_at": null,
+    "linkedin_post_id": null,
+    "error": "expired_after_48h"
+  },
+  {
+    "id": "post_2026_05_18_001",
+    "topic": "How GitHub's Code Search Indexes Billions of Lines Using Trigram Indexing",
+    "status": "expired",
+    "approval_token": "9c5eaf72014cb857",
+    "telegram_message_id": 36,
+    "content": {
+      "hook": "Optimizing code search with trigram indexing boosts efficiency in GitHub's vast repository.",
+      "body": "GitHub's code search employs trigram indexing to efficiently manage billions of lines of code.\n\nThis mechanism breaks down code into overlapping triplets of characters, enabling rapid pattern matching. When a search query is issued, the system generates trigrams from the input and checks against the indexed trigrams in real time.\n\nExample: A search for the term \"def\" produces trigrams such as \"def\", \"ef \", and \"f \". The search engine then locates all occurrences in the index, yielding results almost instantly.\n\n[Input query] -> [Generate trigrams] -> [Search index]\n\nThis approach minimizes latency and maximizes retrieval speed, essential for developers navigating extensive codebases.",
+      "cta": "Implementing trigram indexing can significantly enhance search capabilities in large repositories."
+    },
+    "composed_text": "Optimizing code search with trigram indexing boosts efficiency in GitHub's vast repository.\n\nGitHub's code search employs trigram indexing to efficiently manage billions of lines of code.\n\nThis mechanism breaks down code into overlapping triplets of characters, enabling rapid pattern matching. When a search query is issued, the system generates trigrams from the input and checks against the indexed trigrams in real time.\n\nExample: A search for the term \"def\" produces trigrams such as \"def\", \"ef \", and \"f \". The search engine then locates all occurrences in the index, yielding results almost instantly.\n\n[Input query] -> [Generate trigrams] -> [Search index]\n\nThis approach minimizes latency and maximizes retrieval speed, essential for developers navigating extensive codebases.\n\nImplementing trigram indexing can significantly enhance search capabilities in large repositories.",
+    "risk_flags": [],
+    "proposed_edit": null,
+    "publish_attempted_at": null,
+    "created_at": "2026-05-18T10:12:16Z",
+    "approved_at": null,
+    "posted_at": null,
+    "linkedin_post_id": null,
+    "error": "expired_after_48h"
+  },
+  {
+    "id": "post_2026_05_25_001",
+    "topic": "How Stripe's Idempotency Keys Prevent Duplicate Payment Processing",
+    "status": "expired",
+    "approval_token": "833c5160c02f9bc4",
+    "telegram_message_id": 41,
+    "content": {
+      "hook": "Idempotency keys are crucial for ensuring payment integrity in systems like Stripe.",
+      "body": "Idempotency keys help prevent duplicate payment processing by ensuring that identical requests yield the same result.\n\nWhen a payment request is initiated, the system generates a unique idempotency key. This key is sent along with the request to the payment processor. If the same request is sent again (due to network issues or user retries), the processor identifies the key and avoids reprocessing the payment.\n\nExample: A user tries to pay $50, but the request times out. Upon retrying, the same idempotency key is used, and the payment processor recognizes it, returning the original response instead of charging the user again.\n\n[Payment request] -> [Generate idempotency key] -> [Check for duplicates]\n\nThis approach minimizes errors and enhances user experience by ensuring that payments are processed exactly once, maintaining trust in the payment system.",
+      "cta": "Implementing idempotency keys is essential for any payment system to ensure reliability and user satisfaction."
+    },
+    "composed_text": "Idempotency keys are crucial for ensuring payment integrity in systems like Stripe.\n\nIdempotency keys help prevent duplicate payment processing by ensuring that identical requests yield the same result.\n\nWhen a payment request is initiated, the system generates a unique idempotency key. This key is sent along with the request to the payment processor. If the same request is sent again (due to network issues or user retries), the processor identifies the key and avoids reprocessing the payment.\n\nExample: A user tries to pay $50, but the request times out. Upon retrying, the same idempotency key is used, and the payment processor recognizes it, returning the original response instead of charging the user again.\n\n[Payment request] -> [Generate idempotency key] -> [Check for duplicates]\n\nThis approach minimizes errors and enhances user experience by ensuring that payments are processed exactly once, maintaining trust in the payment system.\n\nImplementing idempotency keys is essential for any payment system to ensure reliability and user satisfaction.",
+    "risk_flags": [],
+    "proposed_edit": null,
+    "publish_attempted_at": null,
+    "created_at": "2026-05-25T10:16:19Z",
+    "approved_at": null,
+    "posted_at": null,
+    "linkedin_post_id": null,
+    "error": "expired_after_48h"
+  },
+  {
+    "id": "post_2026_06_01_001",
+    "topic": "How Apple's Find My Network Locates Offline Devices Without Leaking Their Position",
+    "status": "expired",
+    "approval_token": "bb40095c2b57f0ac",
+    "telegram_message_id": 45,
+    "content": {
+      "hook": "Apple's Find My Network uses a clever approach to locate offline devices without compromising user privacy.",
+      "body": "The Find My Network operates through a decentralized mechanism that enables devices to communicate without directly revealing their locations.\n\nWhen a device goes offline, it can still send out encrypted signals to nearby Apple devices. These nearby devices pick up the signal and relay it back to Apple’s servers, effectively detecting the location of the offline device without disclosing its exact position.\n\nExample: An iPhone that is out of battery sends a signal that nearby iPads or Macs can receive. They relay this encrypted signal back to the iCloud, allowing the owner to see the last known location on a map.\n\n[Offline device] -> [Nearby devices relay signal] -> [iCloud updates location]\n\nThis mechanism is used in practice to maintain user privacy while ensuring that lost devices can still be located efficiently.",
+      "cta": "Utilizing decentralized communication can enhance both functionality and privacy in device tracking solutions."
+    },
+    "composed_text": "Apple's Find My Network uses a clever approach to locate offline devices without compromising user privacy.\n\nThe Find My Network operates through a decentralized mechanism that enables devices to communicate without directly revealing their locations.\n\nWhen a device goes offline, it can still send out encrypted signals to nearby Apple devices. These nearby devices pick up the signal and relay it back to Apple’s servers, effectively detecting the location of the offline device without disclosing its exact position.\n\nExample: An iPhone that is out of battery sends a signal that nearby iPads or Macs can receive. They relay this encrypted signal back to the iCloud, allowing the owner to see the last known location on a map.\n\n[Offline device] -> [Nearby devices relay signal] -> [iCloud updates location]\n\nThis mechanism is used in practice to maintain user privacy while ensuring that lost devices can still be located efficiently.\n\nUtilizing decentralized communication can enhance both functionality and privacy in device tracking solutions.",
+    "risk_flags": [],
+    "proposed_edit": null,
+    "publish_attempted_at": null,
+    "created_at": "2026-06-01T11:42:05Z",
+    "approved_at": null,
+    "posted_at": null,
+    "linkedin_post_id": null,
+    "error": "expired_after_48h"
+  },
+  {
+    "id": "post_2026_06_08_001",
+    "topic": "How CockroachDB Achieves Globally Consistent Transactions with Hybrid Logical Clocks",
+    "status": "expired",
+    "approval_token": "a7dfa1f5b56f2b61",
+    "telegram_message_id": 49,
+    "content": {
+      "hook": "CockroachDB uses Hybrid Logical Clocks to ensure globally consistent transactions across distributed nodes.",
+      "body": "Hybrid Logical Clocks (HLC) provide a way to track the logical time of events in a distributed system while accommodating network latency.\n\nEach node maintains a local clock and incorporates a physical timestamp with a logical counter, allowing for a consistent ordering of transactions.\n\nExample: When a transaction is initiated, the node captures the current HLC. If it conflicts with a transaction from another node, it resolves it based on the HLC values, ensuring that the latest transaction is always honored.\n\n[Local clock] + [Logical counter] -> [Capture HLC] -> [Resolve conflicts]\n\nThis approach allows CockroachDB to maintain strong consistency across geographically diverse data centers, optimizing for both availability and partition tolerance.",
+      "cta": "Implementing Hybrid Logical Clocks can enhance the reliability of distributed transactions in your systems."
+    },
+    "composed_text": "CockroachDB uses Hybrid Logical Clocks to ensure globally consistent transactions across distributed nodes.\n\nHybrid Logical Clocks (HLC) provide a way to track the logical time of events in a distributed system while accommodating network latency.\n\nEach node maintains a local clock and incorporates a physical timestamp with a logical counter, allowing for a consistent ordering of transactions.\n\nExample: When a transaction is initiated, the node captures the current HLC. If it conflicts with a transaction from another node, it resolves it based on the HLC values, ensuring that the latest transaction is always honored.\n\n[Local clock] + [Logical counter] -> [Capture HLC] -> [Resolve conflicts]\n\nThis approach allows CockroachDB to maintain strong consistency across geographically diverse data centers, optimizing for both availability and partition tolerance.\n\nImplementing Hybrid Logical Clocks can enhance the reliability of distributed transactions in your systems.",
+    "risk_flags": [],
+    "proposed_edit": null,
+    "publish_attempted_at": null,
+    "created_at": "2026-06-08T11:02:36Z",
+    "approved_at": null,
+    "posted_at": null,
+    "linkedin_post_id": null,
+    "error": "expired_after_48h"
+  },
+  {
+    "id": "post_2026_06_15_001",
+    "topic": "How Figma's Multiplayer Sync Uses CRDTs to Resolve Concurrent Edits",
+    "status": "expired",
+    "approval_token": "47964d30aba30e5b",
+    "telegram_message_id": 54,
+    "content": {
+      "hook": "Figma's multiplayer sync uses CRDTs to manage concurrent edits effectively.",
+      "body": "Conflict-free Replicated Data Types (CRDTs) allow multiple users to edit a design simultaneously without version conflicts.\n\nWhen a user makes an edit, a signal is generated that includes the action type and the relevant state. This signal is then sent to all other clients.\n\nExample: If User A moves a shape while User B changes its color, both actions are captured as distinct signals and processed concurrently, ensuring all users see the final state without conflicts.\n\n[User edit] -> [Generate signal] -> [Broadcast to clients]\n\nIn practice, this approach minimizes latency in collaborative environments, providing a seamless user experience and ensuring consistent design updates across all users.",
+      "cta": "Implementing CRDTs can enhance real-time collaboration in your applications."
+    },
+    "composed_text": "Figma's multiplayer sync uses CRDTs to manage concurrent edits effectively.\n\nConflict-free Replicated Data Types (CRDTs) allow multiple users to edit a design simultaneously without version conflicts.\n\nWhen a user makes an edit, a signal is generated that includes the action type and the relevant state. This signal is then sent to all other clients.\n\nExample: If User A moves a shape while User B changes its color, both actions are captured as distinct signals and processed concurrently, ensuring all users see the final state without conflicts.\n\n[User edit] -> [Generate signal] -> [Broadcast to clients]\n\nIn practice, this approach minimizes latency in collaborative environments, providing a seamless user experience and ensuring consistent design updates across all users.\n\nImplementing CRDTs can enhance real-time collaboration in your applications.",
+    "risk_flags": [],
+    "proposed_edit": null,
+    "publish_attempted_at": null,
+    "created_at": "2026-06-15T12:22:37Z",
+    "approved_at": null,
+    "posted_at": null,
+    "linkedin_post_id": null,
+    "error": "expired_after_48h"
+  },
+  {
+    "id": "post_2026_06_22_001",
+    "topic": "How DoorDash's Dispatch Algorithm Assigns Orders to Dashers in Real Time",
+    "status": "expired",
+    "approval_token": "2337d14b47fc65ed",
+    "telegram_message_id": 58,
+    "content": {
+      "hook": "Real-time order assignment is critical for delivery efficiency at DoorDash.",
+      "body": "DoorDash utilizes a dispatch algorithm that dynamically assigns orders to Dashers based on several input signals.\n\nThe system evaluates factors like order location, Dasher distance, and estimated delivery time. When an order is placed, the algorithm assesses these inputs against predefined thresholds to determine the best match.\n\nExample: If a user orders food 3 miles away, the algorithm checks for nearby Dashers. If one is within 0.5 miles and available, they receive the order notification.\n\n[Order details] -> [Evaluate Dashers] -> [Assign order]\n\nThis approach optimizes delivery times and boosts customer satisfaction by ensuring timely food delivery.",
+      "cta": "Focus on real-time data analysis to improve your own dispatch systems."
+    },
+    "composed_text": "Real-time order assignment is critical for delivery efficiency at DoorDash.\n\nDoorDash utilizes a dispatch algorithm that dynamically assigns orders to Dashers based on several input signals.\n\nThe system evaluates factors like order location, Dasher distance, and estimated delivery time. When an order is placed, the algorithm assesses these inputs against predefined thresholds to determine the best match.\n\nExample: If a user orders food 3 miles away, the algorithm checks for nearby Dashers. If one is within 0.5 miles and available, they receive the order notification.\n\n[Order details] -> [Evaluate Dashers] -> [Assign order]\n\nThis approach optimizes delivery times and boosts customer satisfaction by ensuring timely food delivery.\n\nFocus on real-time data analysis to improve your own dispatch systems.",
+    "risk_flags": [],
+    "proposed_edit": null,
+    "publish_attempted_at": null,
+    "created_at": "2026-06-22T12:10:42Z",
+    "approved_at": null,
+    "posted_at": null,
+    "linkedin_post_id": null,
+    "error": "expired_after_48h"
+  },
+  {
+    "id": "post_2026_06_29_001",
+    "topic": "How AWS S3 Achieves Eleven 9s of Durability with Erasure Coding",
+    "status": "expired",
+    "approval_token": "0a6c9b5c0e67dd6f",
+    "telegram_message_id": 62,
+    "content": {
+      "hook": "How does AWS S3 achieve eleven 9s of durability?",
+      "body": "AWS S3 employs erasure coding to ensure data durability and fault tolerance across multiple servers.\n\nThe system divides data into fragments, adds redundant pieces, and distributes them across various physical locations. Each fragment is encoded and stored such that any subset of fragments can reconstruct the original data.\n\nExample: If a file is split into 10 fragments with 4 parity fragments, even if 4 of the fragments are lost, the original data can still be recovered from the remaining fragments.\n\n[Data divided] -> [Redundant fragments added] -> [Distributed storage]\n\nThis method minimizes data loss and maximizes availability, effectively achieving eleven 9s of durability in practice.",
+      "cta": "Implementing erasure coding can significantly enhance your data storage reliability."
+    },
+    "composed_text": "How does AWS S3 achieve eleven 9s of durability?\n\nAWS S3 employs erasure coding to ensure data durability and fault tolerance across multiple servers.\n\nThe system divides data into fragments, adds redundant pieces, and distributes them across various physical locations. Each fragment is encoded and stored such that any subset of fragments can reconstruct the original data.\n\nExample: If a file is split into 10 fragments with 4 parity fragments, even if 4 of the fragments are lost, the original data can still be recovered from the remaining fragments.\n\n[Data divided] -> [Redundant fragments added] -> [Distributed storage]\n\nThis method minimizes data loss and maximizes availability, effectively achieving eleven 9s of durability in practice.\n\nImplementing erasure coding can significantly enhance your data storage reliability.",
+    "risk_flags": [],
+    "proposed_edit": null,
+    "publish_attempted_at": null,
+    "created_at": "2026-06-29T11:06:42Z",
+    "approved_at": null,
+    "posted_at": null,
+    "linkedin_post_id": null,
+    "error": "expired_after_48h"
+  },
+  {
+    "id": "post_2026_07_06_001",
+    "topic": "How TikTok's For You Page Ranks Content Using a Two-Stage Retrieval Pipeline",
+    "status": "expired",
+    "approval_token": "38ed34ac0b19e01c",
+    "telegram_message_id": 66,
+    "content": {
+      "hook": "Understanding TikTok's content ranking reveals the mechanics behind user engagement.",
+      "body": "TikTok's For You Page employs a two-stage retrieval pipeline to optimize content delivery.\n\nIn the first stage, the system gathers signals from user interactions, such as likes, shares, and watch time. It ranks videos based on these signals against a set of thresholds, filtering out less relevant content.\n\nIn the second stage, the algorithm applies a more nuanced ranking based on additional factors like user demographics and device type, refining the selection further.\n\nExample: A user frequently engages with dance videos; the system prioritizes similar content, ensuring higher relevance based on observed behavior.\n\n[User signals] -> [Initial ranking] -> [Refined content]\n\nThis approach allows TikTok to maintain low latency in content delivery while optimizing user engagement.",
+      "cta": "Implementing similar multi-stage retrieval methods can enhance content relevance in your applications."
+    },
+    "composed_text": "Understanding TikTok's content ranking reveals the mechanics behind user engagement.\n\nTikTok's For You Page employs a two-stage retrieval pipeline to optimize content delivery.\n\nIn the first stage, the system gathers signals from user interactions, such as likes, shares, and watch time. It ranks videos based on these signals against a set of thresholds, filtering out less relevant content.\n\nIn the second stage, the algorithm applies a more nuanced ranking based on additional factors like user demographics and device type, refining the selection further.\n\nExample: A user frequently engages with dance videos; the system prioritizes similar content, ensuring higher relevance based on observed behavior.\n\n[User signals] -> [Initial ranking] -> [Refined content]\n\nThis approach allows TikTok to maintain low latency in content delivery while optimizing user engagement.\n\nImplementing similar multi-stage retrieval methods can enhance content relevance in your applications.",
+    "risk_flags": [],
+    "proposed_edit": null,
+    "publish_attempted_at": null,
+    "created_at": "2026-07-06T10:43:11Z",
+    "approved_at": null,
+    "posted_at": null,
+    "linkedin_post_id": null,
+    "error": "expired_after_48h"
+  },
+  {
+    "id": "post_2026_07_13_001",
+    "topic": "How YouTube Handles 500 Hours of Video Upload Per Minute with Adaptive Encoding",
+    "status": "expired",
+    "approval_token": "dc73f73d7de2cb99",
+    "telegram_message_id": 70,
+    "content": {
+      "hook": "YouTube's adaptive encoding maximizes video quality while managing massive uploads efficiently.",
+      "body": "YouTube employs adaptive encoding to handle 500 hours of video uploaded every minute. This process optimizes video quality based on available bandwidth and device capabilities.\n\nWhen a video is uploaded, the system analyzes the input signal (video resolution, bitrate). It then encodes multiple versions of the video at different quality levels.\n\nExample: A 4K video may be encoded into 1080p, 720p, and 480p versions, allowing users to stream based on their connection speed.\n\n[Input signal] -> [Analyze quality] -> [Encode multiple versions]\n\nThis approach reduces latency during playback, ensuring a smooth viewing experience across various devices and network conditions.",
+      "cta": "Implementing adaptive encoding can significantly enhance user experience in your applications."
+    },
+    "composed_text": "YouTube's adaptive encoding maximizes video quality while managing massive uploads efficiently.\n\nYouTube employs adaptive encoding to handle 500 hours of video uploaded every minute. This process optimizes video quality based on available bandwidth and device capabilities.\n\nWhen a video is uploaded, the system analyzes the input signal (video resolution, bitrate). It then encodes multiple versions of the video at different quality levels.\n\nExample: A 4K video may be encoded into 1080p, 720p, and 480p versions, allowing users to stream based on their connection speed.\n\n[Input signal] -> [Analyze quality] -> [Encode multiple versions]\n\nThis approach reduces latency during playback, ensuring a smooth viewing experience across various devices and network conditions.\n\nImplementing adaptive encoding can significantly enhance user experience in your applications.",
+    "risk_flags": [],
+    "proposed_edit": null,
+    "publish_attempted_at": null,
+    "created_at": "2026-07-13T09:33:21Z",
+    "approved_at": null,
+    "posted_at": null,
+    "linkedin_post_id": null,
+    "error": "expired_after_48h"
+  },
+  {
+    "id": "post_2026_07_20_001",
+    "topic": "How LinkedIn's People You May Know Uses Graph Neural Networks",
+    "status": "expired",
+    "approval_token": "d43e255549b3f9a5",
+    "telegram_message_id": 74,
+    "content": {
+      "hook": "Graph neural networks enhance LinkedIn's People You May Know feature by analyzing connections intelligently.",
+      "body": "Graph neural networks (GNNs) model relationships among users to suggest potential connections.\n\nThe system takes user data (existing connections, profile attributes, and interactions) as input signals. It processes these signals through multiple layers, capturing complex relationships in the graph structure.\n\nExample: If User A is connected to Users B and C, and both B and C share mutual connections with User D, the GNN may suggest User D to User A based on their network dynamics.\n\n[User data] -> [Process connections] -> [Suggest connections]\n\nThis approach optimizes the relevance of suggestions by leveraging rich relational data, improving user engagement and network expansion.",
+      "cta": "Utilizing graph neural networks creates more meaningful connections in professional networks."
+    },
+    "composed_text": "Graph neural networks enhance LinkedIn's People You May Know feature by analyzing connections intelligently.\n\nGraph neural networks (GNNs) model relationships among users to suggest potential connections.\n\nThe system takes user data (existing connections, profile attributes, and interactions) as input signals. It processes these signals through multiple layers, capturing complex relationships in the graph structure.\n\nExample: If User A is connected to Users B and C, and both B and C share mutual connections with User D, the GNN may suggest User D to User A based on their network dynamics.\n\n[User data] -> [Process connections] -> [Suggest connections]\n\nThis approach optimizes the relevance of suggestions by leveraging rich relational data, improving user engagement and network expansion.\n\nUtilizing graph neural networks creates more meaningful connections in professional networks.",
+    "risk_flags": [],
+    "proposed_edit": null,
+    "publish_attempted_at": null,
+    "created_at": "2026-07-20T09:20:05Z",
+    "approved_at": null,
+    "posted_at": null,
+    "linkedin_post_id": null,
+    "error": "expired_after_48h"
+  },
+  {
+    "id": "post_2026_07_27_001",
+    "topic": "How Cloudflare's Anycast Routing Absorbs DDoS Traffic at the Edge",
+    "status": "expired",
+    "approval_token": "a7441408f7cceba1",
+    "telegram_message_id": 78,
+    "content": {
+      "hook": "Cloudflare's Anycast routing effectively mitigates DDoS attacks by distributing traffic across multiple edge locations.",
+      "body": "Anycast routing allows multiple servers to share the same IP address. When a user accesses a service, their request is directed to the nearest edge server based on network proximity.\n\nThis mechanism leverages global routing tables to optimize traffic allocation. As DDoS traffic floods in, the system evaluates incoming signals from various locations and reroutes them to less congested servers, maintaining performance.\n\nExample: If a server in New York is overwhelmed with 10 Gbps of malicious traffic, the Anycast system redistributes requests to edge servers in Los Angeles and Chicago, effectively balancing the load.\n\n[User request] -> [Route to nearest server] -> [Distribute load]\n\nUsing Anycast helps isolate and absorb DDoS traffic at the edge, protecting the core infrastructure from being overwhelmed.",
+      "cta": "Implementing Anycast routing enhances network resilience against DDoS attacks, ensuring availability and performance."
+    },
+    "composed_text": "Cloudflare's Anycast routing effectively mitigates DDoS attacks by distributing traffic across multiple edge locations.\n\nAnycast routing allows multiple servers to share the same IP address. When a user accesses a service, their request is directed to the nearest edge server based on network proximity.\n\nThis mechanism leverages global routing tables to optimize traffic allocation. As DDoS traffic floods in, the system evaluates incoming signals from various locations and reroutes them to less congested servers, maintaining performance.\n\nExample: If a server in New York is overwhelmed with 10 Gbps of malicious traffic, the Anycast system redistributes requests to edge servers in Los Angeles and Chicago, effectively balancing the load.\n\n[User request] -> [Route to nearest server] -> [Distribute load]\n\nUsing Anycast helps isolate and absorb DDoS traffic at the edge, protecting the core infrastructure from being overwhelmed.\n\nImplementing Anycast routing enhances network resilience against DDoS attacks, ensuring availability and performance.",
+    "risk_flags": [
+      "Avoids proprietary claims",
+      "Ensures clarity on technical mechanics",
+      "Maintains a focus on established practices"
+    ],
+    "proposed_edit": null,
+    "publish_attempted_at": null,
+    "created_at": "2026-07-27T09:56:51Z",
+    "approved_at": null,
+    "posted_at": null,
+    "linkedin_post_id": null,
+    "error": "expired_after_48h"
   }
 ]
